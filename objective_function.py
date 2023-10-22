@@ -1,5 +1,12 @@
 import numpy as np
 
+
+minimum_collision_distance = 1 # Minimum distance between any two points to avoid collisions
+maximum_energy = 100 # Maximum allowable total energy consumption
+constant_speed = 1.0 # Constant speed of the drones
+energy_weight = 0.1 # Weight for energy consumption in the fitness function
+
+
 def euclidean_distance(point1, point2):
     """
     Calculate the Euclidean distance between two 3D points.
@@ -13,7 +20,7 @@ def euclidean_distance(point1, point2):
     """
     return np.linalg.norm(np.array(point1) - np.array(point2))
 
-def calculate_single_path_fitness(x, ps, pt, constant_speed, energy_weight):
+def calculate_single_path_fitness(x, ps, pt):
     """
     Calculate the total distance and energy consumption for a single path x.
 
@@ -21,8 +28,6 @@ def calculate_single_path_fitness(x, ps, pt, constant_speed, energy_weight):
     x (list of tuples): A list of control points defining the path.
     ps (tuple): The start point (x, y, z).
     pt (tuple): The target point (x, y, z).
-    constant_speed (float): The constant speed of the drone.
-    energy_weight (float): The weight of energy consumption in the fitness function.
 
     Returns:
         float: The fitness value for the path.
@@ -49,7 +54,7 @@ def calculate_single_path_fitness(x, ps, pt, constant_speed, energy_weight):
     return fitness
 
 
-def calculate_total_fitness(drone_paths, ps_list, pt_list, constant_speed, energy_weight):
+def calculate_total_fitness(drone_paths, ps_list, pt_list):
     """
     Calculate the total distance for multiple drones' paths.
 
@@ -57,24 +62,21 @@ def calculate_total_fitness(drone_paths, ps_list, pt_list, constant_speed, energ
     drone_paths (list of lists): A list of paths, each defined as a list of control points.
     ps_list (list of tuples): A list of start points for each drone.
     pt_list (list of tuples): A list of target points for each drone.
-    constant_speed (float): The constant speed of the drone.
-    energy_weight (float): The weight of energy consumption in the fitness function.
 
     Returns:
     float: The total fitness value traveled along all paths from ps to pt.
     """
     total_fitness = 0.0
-
     for i in range(len(drone_paths)):
         path = drone_paths[i]
         ps = ps_list[i]
         pt = pt_list[i]
-        fitness = calculate_single_path_fitness(path, ps, pt, constant_speed, energy_weight)
+        fitness = calculate_single_path_fitness(path, ps, pt)
         total_fitness += fitness
 
     return total_fitness
 
-def check_energy_constraint(ps, pt, drone_paths, constant_speed, maximum_energy):
+def check_energy_constraint(ps, pt, drone_paths):
     """
     Check if the total energy consumed by all drones satisfies the energy constraint.
 
@@ -88,7 +90,7 @@ def check_energy_constraint(ps, pt, drone_paths, constant_speed, maximum_energy)
     """
     total_energy = 0.0
     for path, psi, pti in zip(drone_paths, ps, pt):
-        total_distance = calculate_single_path_fitness(path, psi, pti, constant_speed, 0)
+        total_distance = calculate_single_path_fitness(path, psi, pti)
         energy_consumed = total_distance / constant_speed
         total_energy += energy_consumed
 
@@ -125,25 +127,43 @@ def check_collision_constraint(drone_paths, obstacle_list):
 
     return True  # No collisions with other drones or obstacles
 
-# Example usage:
-# Define paths for three drones
-drone1_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
-drone2_path = [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 2, 0)]
-drone3_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
+def check_feasibility(ps_list, pt_list, drone_paths, obstacle_list):
+    """
+    Check if the solution is feasible.
 
-# Define start and target points for the drones
-ps_list = [(0, 0, 0), (0, 0, 0), (0, 0, 0)]
-pt_list = [(2, 2, 0), (2, 2, 0), (2, 2, 0)]
+    Args:
+    ps_list (list of tuples): A list of start points for each drone.
+    pt_list (list of tuples): A list of target points for each drone.
+    drone_paths (list): List of drone paths where each path is a list of 3D points.
+    obstacle_list (list): List of obstacle representations.
 
-# Constant speed of drones (e.g., 1.0 units per time step)
-constant_speed = 1.0
 
-# Weight for energy consumption in the fitness function
-energy_weight = 0.1
+    Returns:
+        bool: True if the solution is feasible, False otherwise.
+    """
+    return check_collision_constraint(drone_paths, obstacle_list) and check_energy_constraint(ps_list, pt_list, drone_paths)
 
-# Create a list of drone paths
-drone_paths = [drone1_path, drone2_path, drone3_path]
 
-# Calculate the total fitness for all drones
-total_fitness = calculate_total_fitness(drone_paths, ps_list, pt_list, constant_speed, energy_weight)
-print("Total Fitness for All Drones:", total_fitness)
+
+# # Example usage:
+# # Define paths for three drones
+# drone1_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
+# drone2_path = [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 2, 0)]
+# drone3_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
+
+# # Define start and target points for the drones
+# ps_list = [(0, 0, 0), (0, 0, 0), (0, 0, 0)]
+# pt_list = [(2, 2, 0), (2, 2, 0), (2, 2, 0)]
+
+# # Constant speed of drones (e.g., 1.0 units per time step)
+# constant_speed = 1.0
+
+# # Weight for energy consumption in the fitness function
+# energy_weight = 0.1
+
+# # Create a list of drone paths
+# drone_paths = [drone1_path, drone2_path, drone3_path]
+
+# # Calculate the total fitness for all drones
+# total_fitness = calculate_total_fitness(drone_paths, ps_list, pt_list, constant_speed, energy_weight)
+# print("Total Fitness for All Drones:", total_fitness)
