@@ -89,6 +89,4 @@ def simulated_annealing(initial_temperature, final_temperature):
     return best_solution
 
 
-# Output the best solution found
-print("Best Solution:", x_best)
-print("Best Objective Value:", f_best)
+
