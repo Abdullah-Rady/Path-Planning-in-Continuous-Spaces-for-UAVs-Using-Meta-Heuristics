@@ -1,6 +1,7 @@
 import random
 import math
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 from objective_function import calculate_total_fitness, generate_initial_solution, check_feasibility, \
     check_feasibility_SA, build_grid
@@ -86,7 +87,7 @@ def simulated_annealing(ps_list, pt_list, grid):
     return best_solution
 
 
-def plot_graph(fitness_values_per_iteration, min_fitness_values, decreasing_fitness, decreasing_min):
+def plot_graph(fitness_values_per_iteration, min_fitness_values):
     def update(frame):
         plt.clf()  # Clear the current frame
 
@@ -106,18 +107,6 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, decreasing_fitn
         ax2.set_xlabel('Generation')
         ax2.set_ylabel('Minimum Fitness')
         ax2.set_title('Minimum Fitness Evolution Over Generations')
-
-        # Create small graphs (subplots) beside the main graph
-        decreasing_graph1 = plt.subplot(2, 2, 3)  # Two rows, two columns, this is the second subplot
-        decreasing_graph1.set_ylabel('Decreasing Total Fitness')
-        decreasing_graph1.set_title('Decreasing Total Fitness Evolution Over Generations')
-        decreasing_graph2 = plt.subplot(2, 2, 4)  # Two rows, two columns, this is the third subplot
-        decreasing_graph2.set_ylabel('Decreasing Minimum Fitness')
-        decreasing_graph2.set_title('Decreasing Minimum Fitness Evolution Over Generations')
-
-        # Plot something in the small graphs
-        decreasing_graph1.plot(decreasing_fitness, marker='o', linestyle='-')
-        decreasing_graph2.plot(decreasing_min, marker='o', linestyle='-')
 
         # Create the initial plot with two subplots
 
@@ -145,7 +134,6 @@ size_of_grid1 = 30  # Size of the grid
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
 ps_list1 = [(5, 5, 5), (10, 10, 10), (20, 20, 20), (5, 20, 10)]
 
-
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6), (5, 4, 1)]
 pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12), (10, 25, 15)]
@@ -153,7 +141,6 @@ pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12), (10, 25, 15)]
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
-
 
 grid = build_grid(obstacle_list1, size_of_grid1)  # Build grid
 best_solution = simulated_annealing(ps_list1, pt_list1, grid)  # Run simulated annealing

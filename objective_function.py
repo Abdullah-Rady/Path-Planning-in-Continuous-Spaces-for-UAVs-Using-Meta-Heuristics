@@ -244,7 +244,7 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
     def is_valid(point):
         x, y, z = point
         return 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0 and (
-                    drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != depth)
+                drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != depth)
 
     def get_neighbors(point):
         x, y, z = point
@@ -258,7 +258,7 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
     queue.put(start)
     came_from = {}
     came_from[start] = None
-    depth = 0
+    depth = 2
 
     while not queue.empty():
         current = queue.get()
@@ -268,7 +268,7 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
                 current = came_from[current]
                 path.insert(0, current)
             return path
-
+        
         for neighbor in get_neighbors(current):
             if neighbor not in came_from:
                 queue.put(neighbor)
@@ -295,15 +295,27 @@ def get_all_paths_with_bfs(ps_list, pt_list, grid):
 
     drone_occupancy = [[[(0, 0) for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
 
-    drone_tag = 0
+    drone_tag = 1
+    for ps, pt in zip(ps_list, pt_list):
+        drone_occupancy[ps[0]][ps[1]][ps[2]] = (drone_tag, 1)
+        drone_occupancy[pt[0]][pt[1]][pt[2]] = (drone_tag, 100)
+        drone_tag += 1
+
+    drone_tag = 1
     for ps, pt in zip(ps_list, pt_list):
         path = get_single_path_with_bfs(ps, pt, grid, drone_occupancy)
+        print(ps, pt)
+        print(path)
         simplified_path = douglas_peucker(path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)
 
-        depth = 0
+        depth = 2
         for point in path:
+
+            if point == ps or point == pt:
+                continue
+
             x, y, z = point
             drone_occupancy[x][y][z] = (drone_tag, depth)
             depth += 1
@@ -341,7 +353,6 @@ def douglas_peucker(points):
     Returns:
         list: similar path with fewer number of control points.
     """
-    print(points)
     if len(points) <= 2:
         return [points[0], points[-1]]
 
@@ -368,4 +379,3 @@ def douglas_peucker(points):
         return first_segment[:-1] + second_segment  # Exclude the duplicated point
     else:
         return [start, end]
-    
