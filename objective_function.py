@@ -268,7 +268,7 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
                 current = came_from[current]
                 path.insert(0, current)
             return path
-        
+
         for neighbor in get_neighbors(current):
             if neighbor not in came_from:
                 queue.put(neighbor)
@@ -304,8 +304,8 @@ def get_all_paths_with_bfs(ps_list, pt_list, grid):
     drone_tag = 1
     for ps, pt in zip(ps_list, pt_list):
         path = get_single_path_with_bfs(ps, pt, grid, drone_occupancy)
-        print(ps, pt)
-        print(path)
+        # print(ps, pt)
+        # print(path)
         simplified_path = douglas_peucker(path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)

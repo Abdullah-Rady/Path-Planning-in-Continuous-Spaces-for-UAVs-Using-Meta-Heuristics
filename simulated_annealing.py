@@ -124,26 +124,30 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values):
 
 # Example usage:
 
-numberOfDrones = 3  # Number of drones
-numberOfDrones1 = 4
 
 size_of_grid = 50  # Size of the grid
 size_of_grid1 = 30  # Size of the grid
+size_of_grid2 = 20  # Size of the grid
+
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
 ps_list1 = [(5, 5, 5), (10, 10, 10), (20, 20, 20), (5, 20, 10)]
+ps_list2 = [(1, 1, 1), (5, 5, 5)]
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6), (5, 4, 1)]
 pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12), (10, 25, 15)]
+pt_list2 = [(15, 15, 15), (18, 18, 18)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
+obstacle_list2 = []
 
-grid = build_grid(obstacle_list1, size_of_grid1)  # Build grid
-best_solution = simulated_annealing(ps_list1, pt_list1, grid)  # Run simulated annealing
+
+grid = build_grid(obstacle_list2, size_of_grid2)  # Build grid
+best_solution = simulated_annealing(ps_list2, pt_list2, grid)  # Run simulated annealing
 
 print(best_solution)  # Print best solution
 
