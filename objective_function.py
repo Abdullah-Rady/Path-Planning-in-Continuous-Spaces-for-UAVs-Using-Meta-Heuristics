@@ -10,18 +10,18 @@ size_of_grid = 50  # Size of the 3D grid representation of the environment
 tolerance = 1.0  # douglas_peucker
 
 
-def euclidean_distance(point1, point2):
-    """
-    Calculate the Euclidean distance between two 3D points.
+# def euclidean_distance(point1, point2):
+#     """
+#     Calculate the Euclidean distance between two 3D points.
 
-    Parameters:
-    point1 (tuple): The first 3D point (x, y, z).
-    point2 (tuple): The second 3D point (x, y, z).
+#     Parameters:
+#     point1 (tuple): The first 3D point (x, y, z).
+#     point2 (tuple): The second 3D point (x, y, z).
 
-    Returns:
-    float: The Euclidean distance between point1 and point2.
-    """
-    return np.linalg.norm(np.array(point1) - np.array(point2))
+#     Returns:
+#     float: The Euclidean distance between point1 and point2.
+#     """
+#     return np.linalg.norm(np.array(point1) - np.array(point2))
 
 
 def calculate_single_path_distance(x):
@@ -148,22 +148,22 @@ def check_collision_constraint(drone_paths, obstacle_list):
     return True  # No collisions with other drones or obstacles
 
 
-def check_feasibility(ps_list, pt_list, drone_paths, obstacle_list):
-    """
-    Check if the solution is feasible.
+# def check_feasibility(ps_list, pt_list, drone_paths, obstacle_list):
+#     """
+#     Check if the solution is feasible.
 
-    Args:
-    ps_list (list of tuples): A list of start points for each drone.
-    pt_list (list of tuples): A list of target points for each drone.
-    drone_paths (list): List of drone paths where each path is a list of 3D points.
-    obstacle_list (list): List of obstacle representations.
+#     Args:
+#     ps_list (list of tuples): A list of start points for each drone.
+#     pt_list (list of tuples): A list of target points for each drone.
+#     drone_paths (list): List of drone paths where each path is a list of 3D points.
+#     obstacle_list (list): List of obstacle representations.
 
 
-    Returns:
-        bool: True if the solution is feasible, False otherwise.
-    """
-    return check_collision_constraint(drone_paths, obstacle_list) and check_energy_constraint(ps_list, pt_list,
-                                                                                              drone_paths)
+#     Returns:
+#         bool: True if the solution is feasible, False otherwise.
+#     """
+#     return check_collision_constraint(drone_paths, obstacle_list) and check_energy_constraint(ps_list, pt_list,
+#                                                                                               drone_paths)
 
 
 def check_feasibility_SA(drone_paths, obstacle_list, r1, r2):

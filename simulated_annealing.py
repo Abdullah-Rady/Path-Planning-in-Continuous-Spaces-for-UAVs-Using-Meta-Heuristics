@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution, check_feasibility, \
-    check_feasibility_SA, build_grid
+from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility_SA, build_grid
 
-max_iterations = 5000  # Maximum number of iterations
-n_iterations = 100  # Number of iterations at each temperature
+max_iterations = 500  # Maximum number of iterations
+n_iterations = 10  # Number of iterations at each temperature
 
-initial_temperature = 1000.0  # Initial temperature
+initial_temperature = 100.0  # Initial temperature
 final_temperature = 0.1  # Final temperature
 
 alpha = 0.9  # Cooling rate
@@ -31,6 +30,7 @@ def simulated_annealing(ps_list, pt_list, grid):
     # print(current_solution)
     mfv = []
     afv = []
+    temperatures = []
 
     best_solution = current_solution  # Best solution found so far
 
@@ -87,14 +87,16 @@ def simulated_annealing(ps_list, pt_list, grid):
 
         # Update temperature and iteration counter
             mfv.append(best_solution_value)
+            temperatures.append(current_temperature)
         current_temperature = geometric_cooling_schedule(current_temperature)
         iteration += 1
+    # print(temperatures)
 
     # Return the best solution found
-    return afv, mfv, best_solution
+    return afv, mfv, best_solution,temperatures
 
 
-def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths):
+def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, temperatures):
     def update(frame):
         plt.clf()  # Clear the current frame
 
@@ -114,26 +116,35 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths):
         ax2.set_ylabel('Minimum Cost')
         ax2.set_title('Minimum Cost Change Over Iterations')
 
-                # Plot 3D Paths for Drones
-        ax3 = plt.subplot(2, 2, 3, projection='3d')  # Create a 3D subplot
-        for i, path in enumerate(drone_paths[:plt_iteration]):
-            path = list(zip(*path))  # Transpose the path data
-            x, y, z = path
-            ax3.plot(x, y, z, label=f'Drone {i + 1}')
+        # Plot Temperature vs. Time
+        ax3 = plt.subplot(2, 2, 3)
+        ax3.plot(range(1, plt_iteration + 1), temperatures[:plt_iteration], marker='o', linestyle='-', color='r')
+        ax3.set_xlabel('Iterations')
+        ax3.set_ylabel('Temperature')
+        ax3.set_title('Temperature Over Time')
 
-        ax3.set_xlabel('X')
-        ax3.set_ylabel('Y')
-        ax3.set_zlabel('Z')
-        ax3.set_title('3D Paths for Drones')
-        ax3.legend()
+        # Plot 3D Paths for Drones
+        # ax4 = plt.subplot(2, 2, 4, projection='3d')
+        # for i, path in enumerate(drone_paths[:plt_iteration]):
+        #     path = list(zip(*path))  # Transpose the path data
+        #     x, y, z = path
+        #     ax4.plot(x, y, z, label=f'Drone {i + 1}')
 
-    fig = plt.figure(figsize=(12, 5))
+        # ax4.set_xlabel('X')
+        # ax4.set_ylabel('Y')
+        # ax4.set_zlabel('Z')
+        # ax4.set_title('3D Paths for Drones')
+        # ax4.legend()
+
+    fig = plt.figure(figsize=(12, 10))
     plt.subplots_adjust(hspace=0.5)
-    # fig.canvas.manager.window.wm_geometry("+50+100")
 
+    # Set up the animation
     ani = FuncAnimation(fig, update, frames=len(fitness_values_per_iteration), repeat=False, blit=False)
 
     plt.show()
+
+
 
 
 # Example usage:
@@ -166,6 +177,6 @@ obstacle_list3 = []
 
 
 grid = build_grid(obstacle_list, size_of_grid)  # Build grid
-afv, mfv, best_solution = simulated_annealing(ps_list, pt_list, grid)  # Run simulated annealing
+afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list, grid)  # Run simulated annealing
 
-plot_graph(afv, mfv, best_solution)
+plot_graph(afv, mfv, best_solution,temperatures=temperatures)
