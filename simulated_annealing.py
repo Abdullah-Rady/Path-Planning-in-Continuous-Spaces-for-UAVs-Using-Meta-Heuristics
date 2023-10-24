@@ -42,7 +42,7 @@ def simulated_annealing(ps_list, pt_list, grid):
     while current_temperature > final_temperature and not iteration > max_iterations:
         for _ in range(n_iterations):
             fitness_value = calculate_total_fitness(current_solution)
-
+            afv.append(fitness_value)
             # Generate a new solution x_new
             # r1 is a random index of a path, and r2 is a random index of a point within the path
             r1 = random.randint(0, len(current_solution) - 1)
@@ -72,7 +72,6 @@ def simulated_annealing(ps_list, pt_list, grid):
 
             delta_E = calculate_total_fitness(new_solution) - fitness_value
 
-            afv.append(delta_E + fitness_value)
 
             if delta_E < 0:
                 # Accept the better solution
@@ -114,7 +113,18 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths):
         ax2.set_ylabel('Minimum Cost')
         ax2.set_title('Minimum Cost Change Over Iterations')
 
-    
+                # Plot 3D Paths for Drones
+        ax3 = plt.subplot(2, 2, 3, projection='3d')  # Create a 3D subplot
+        for i, path in enumerate(drone_paths[:plt_iteration]):
+            path = list(zip(*path))  # Transpose the path data
+            x, y, z = path
+            ax3.plot(x, y, z, label=f'Drone {i + 1}')
+
+        ax3.set_xlabel('X')
+        ax3.set_ylabel('Y')
+        ax3.set_zlabel('Z')
+        ax3.set_title('3D Paths for Drones')
+        ax3.legend()
 
     fig = plt.figure(figsize=(12, 5))
     plt.subplots_adjust(hspace=0.5)
@@ -154,7 +164,7 @@ obstacle_list2 = []
 obstacle_list3 = []
 
 
-grid = build_grid(obstacle_list3, size_of_grid3)  # Build grid
-afv, mfv, best_solution = simulated_annealing(ps_list3, pt_list3, grid)  # Run simulated annealing
+grid = build_grid(obstacle_list, size_of_grid)  # Build grid
+afv, mfv, best_solution = simulated_annealing(ps_list, pt_list, grid)  # Run simulated annealing
 
 plot_graph(afv, mfv, best_solution)
