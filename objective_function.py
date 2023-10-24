@@ -1,14 +1,14 @@
 import numpy as np
 from queue import Queue
 
+minimum_collision_distance = 1  # Minimum distance between any two points to avoid collisions
+maximum_energy = 100  # Maximum allowable total energy consumption
+constant_speed = 1.0  # Constant speed of the drones
+energy_weight = 0.1  # Weight for energy consumption in the fitness function
+energy_per_distance = 1.0  # Energy consumed per unit distance traveled
+size_of_grid = 50  # Size of the 3D grid representation of the environment
+tolerance = 1.0  # douglas_peucker
 
-minimum_collision_distance = 1 # Minimum distance between any two points to avoid collisions
-maximum_energy = 100 # Maximum allowable total energy consumption
-constant_speed = 1.0 # Constant speed of the drones
-energy_weight = 0.1 # Weight for energy consumption in the fitness function
-energy_per_distance = 1.0 # Energy consumed per unit distance traveled
-size_of_grid = 50 # Size of the 3D grid representation of the environment
-tolerance = 1.0  # douglas_peucker 
 
 def euclidean_distance(point1, point2):
     """
@@ -24,33 +24,31 @@ def euclidean_distance(point1, point2):
     return np.linalg.norm(np.array(point1) - np.array(point2))
 
 
-def calculate_single_path_distance(x, ps, pt):
+def calculate_single_path_distance(x):
     """
     Calculate the total distance for a single path x.
-    
+
     Parameters:
         x (list of tuples): A list of control points defining the path.
-        ps (tuple): The start point (x, y, z).
-        pt (tuple): The target point (x, y, z).
 
     Returns:
         float: The total distance traveled along the path from ps to pt.
 
     """
-     
+
     num_points = len(x)
 
-    total_distance = euclidean_distance(ps, x[0])  # Distance from start to the first control point
-
+    total_distance = 0
     # Distance between all control points
-    for i in range(1, num_points - 1):
+    for i in range(0, num_points - 1):
         total_distance += euclidean_distance(x[i], x[i + 1])
 
-    total_distance += euclidean_distance(x[-1], pt)  # Distance from the last control point to the target
+    total_distance += euclidean_distance(x[-2], x[-1])  # Distance from the last control point to the target
 
     return total_distance
 
-def calculate_single_path_fitness(x, ps, pt):
+
+def calculate_single_path_fitness(x):
     """
     Calculate the total distance and energy consumption for a single path x.
 
@@ -67,8 +65,7 @@ def calculate_single_path_fitness(x, ps, pt):
     if num_points < 2:
         return 0.0  # No movement if there are no control points
 
-    total_distance += calculate_single_path_distance(x, ps, pt)
-
+    total_distance = calculate_single_path_distance(x)
 
     # Calculate energy consumption based on distance
     energy_consumed = total_distance * energy_per_distance
@@ -79,7 +76,7 @@ def calculate_single_path_fitness(x, ps, pt):
     return fitness
 
 
-def calculate_total_fitness(drone_paths, ps_list, pt_list):
+def calculate_total_fitness(drone_paths):
     """
     Calculate the total distance for multiple drones' paths.
 
@@ -94,12 +91,11 @@ def calculate_total_fitness(drone_paths, ps_list, pt_list):
     total_fitness = 0.0
     for i in range(len(drone_paths)):
         path = drone_paths[i]
-        ps = ps_list[i]
-        pt = pt_list[i]
-        fitness = calculate_single_path_fitness(path, ps, pt)
+        fitness = calculate_single_path_fitness(path)
         total_fitness += fitness
 
     return total_fitness
+
 
 def check_energy_constraint(ps, pt, drone_paths):
     """
@@ -119,8 +115,9 @@ def check_energy_constraint(ps, pt, drone_paths):
 
         if energy_consumed > maximum_energy:
             return False  # Energy constraint is violated
-        
+
     return True  # Energy constraint is satisfied
+
 
 def check_collision_constraint(drone_paths, obstacle_list):
     """
@@ -150,6 +147,7 @@ def check_collision_constraint(drone_paths, obstacle_list):
 
     return True  # No collisions with other drones or obstacles
 
+
 def check_feasibility(ps_list, pt_list, drone_paths, obstacle_list):
     """
     Check if the solution is feasible.
@@ -164,10 +162,45 @@ def check_feasibility(ps_list, pt_list, drone_paths, obstacle_list):
     Returns:
         bool: True if the solution is feasible, False otherwise.
     """
-    return check_collision_constraint(drone_paths, obstacle_list) and check_energy_constraint(ps_list, pt_list, drone_paths)
+    return check_collision_constraint(drone_paths, obstacle_list) and check_energy_constraint(ps_list, pt_list,
+                                                                                              drone_paths)
 
-def build_grid(obstacles):
 
+def check_feasibility_SA(drone_paths, obstacle_list, r1, r2):
+    """
+    Check if the solution is feasible.
+
+    Args:
+
+    drone_paths (list): List of drone paths where each path is a list of 3D points.
+    obstacle_list (list): List of obstacle representations.
+
+
+    Returns:
+        bool: True if the solution is feasible, False otherwise.
+    """
+
+    for i in range(len(drone_paths)):
+        if i == r1:
+            continue
+        path1 = drone_paths[i]
+        point = drone_paths[r1][r2]
+        for point1 in path1:
+            if euclidean_distance(point1, point) < minimum_collision_distance:
+                return False
+
+    for obstacle in obstacle_list:
+        point = drone_paths[r1][r2]
+
+        for i in range(obstacle[0][0], obstacle[1][0]):
+            for j in range(obstacle[0][1], obstacle[1][1]):
+                for k in range(obstacle[0][2], obstacle[1][2]):
+                    if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
+                        return False
+    return True
+
+
+def build_grid(obstacles, size_of_grid):
     """
     Build a grid representation of the environment.
         0: Free space
@@ -180,20 +213,19 @@ def build_grid(obstacles):
 
     Returns:
         list: A 3D grid representation of the environment.
-        
+
 
     """
     grid = [[[0 for _ in range(size_of_grid)] for _ in range(size_of_grid)] for _ in range(size_of_grid)]
 
     # Set all obstacles to 1
     for obstacle in obstacles:
-       for i in range(obstacle[0][0], obstacle[1][0]):
-              for j in range(obstacle[0][1], obstacle[1][1]):
-                    for k in range(obstacle[0][2], obstacle[1][2]):
-                        grid[i][j][k] = 1
+        for i in range(obstacle[0][0], obstacle[1][0]):
+            for j in range(obstacle[0][1], obstacle[1][1]):
+                for k in range(obstacle[0][2], obstacle[1][2]):
+                    grid[i][j][k] = 1
 
     return grid
-
 
 
 def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
@@ -208,13 +240,16 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
     Returns:
         list: A list of control points defining the path.
     """
+
     def is_valid(point):
         x, y, z = point
-        return 0 <= x < size_of_grid and 0 <= y < size_of_grid and 0 <= z < size_of_grid and grid[x][y][z] == 0  and (drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != depth)
+        return 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0 and (
+                    drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != depth)
 
     def get_neighbors(point):
         x, y, z = point
-        neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if (dx != 0 or dy != 0 or dz != 0)]
+        neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if
+                     (dx != 0 or dy != 0 or dz != 0)]
         return [neighbor for neighbor in neighbors if is_valid(neighbor)]
 
     start = tuple(map(int, ps))
@@ -242,6 +277,7 @@ def get_single_path_with_bfs(ps, pt, grid, drone_occupancy):
 
     return []
 
+
 def get_all_paths_with_bfs(ps_list, pt_list, grid):
     """
     Get all paths from the start points to the target points using BFS.
@@ -257,7 +293,7 @@ def get_all_paths_with_bfs(ps_list, pt_list, grid):
     all_paths = []
     simplified_paths = []
 
-    drone_occupancy = [[[(0, 0) for _ in range(size_of_grid)] for _ in range(size_of_grid)] for _ in range(size_of_grid)]
+    drone_occupancy = [[[(0, 0) for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
 
     drone_tag = 0
     for ps, pt in zip(ps_list, pt_list):
@@ -276,24 +312,24 @@ def get_all_paths_with_bfs(ps_list, pt_list, grid):
 
     return simplified_paths
 
-def generate_initial_solution(ps_list, pt_list, obstacles):
+
+def generate_initial_solution(ps_list, pt_list, grid):
     """
     Generate an initial solution to the problem using BFS.
 
     Args:
         ps (tuple): The start point (x, y, z).
         pt (tuple): The target point (x, y, z).
-        obstacles (list): A list representation of obstacles in the environment.
 
     Returns:
         list: Initial solution.
     """
-    grid = build_grid(obstacles)
     return get_all_paths_with_bfs(ps_list, pt_list, grid)
 
 
 def euclidean_distance(point1, point2):
     return ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2 + (point1[2] - point2[2]) ** 2) ** 0.5
+
 
 def douglas_peucker(points):
     """
@@ -305,6 +341,7 @@ def douglas_peucker(points):
     Returns:
         list: similar path with fewer number of control points.
     """
+    print(points)
     if len(points) <= 2:
         return [points[0], points[-1]]
 
@@ -325,41 +362,10 @@ def douglas_peucker(points):
     # Check if the farthest point exceeds the tolerance
     if max_distance > tolerance:
         # Recursively simplify the path
-        first_segment = douglas_peucker(points[:max_index + 1], tolerance)
-        second_segment = douglas_peucker(points[max_index:], tolerance)
+        first_segment = douglas_peucker(points[:max_index + 1])
+        second_segment = douglas_peucker(points[max_index:])
 
         return first_segment[:-1] + second_segment  # Exclude the duplicated point
     else:
         return [start, end]
-
-# Example usage:
-# Define paths for three drones
-drone1_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
-drone2_path = [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 2, 0)]
-drone3_path = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (2, 1, 0)]
-
-# Define start and target points for the drones
-
-# Define start points for the drones (x, y, z)
-ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-
-# Define target points for the drones (x, y, z)
-pt_list = [(5, 6, 4), (0, 8, 6), (5, 4, 1)]
-
-# Define obstacles [(x, y, z) (x, y, z)]
-obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
-
-# Constant speed of drones (e.g., 1.0 units per time step)
-constant_speed = 1.0
-
-# Weight for energy consumption in the fitness function
-energy_weight = 0.1
-
-# Create a list of drone paths
-drone_paths = [drone1_path, drone2_path, drone3_path]
-
-grid = build_grid(obstacle_list)
-
-# Calculate the total fitness for all drones
-total_fitness = calculate_total_fitness(drone_paths, ps_list, pt_list, constant_speed, energy_weight)
-print("Total Fitness for All Drones:", total_fitness)
+    

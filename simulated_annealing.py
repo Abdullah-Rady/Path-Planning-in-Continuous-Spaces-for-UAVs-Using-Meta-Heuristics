@@ -1,47 +1,41 @@
 import random
 import math
+import matplotlib.pyplot as plt
 
-from objective_function import calculate_total_fitness, generate_initial_solution
+from objective_function import calculate_total_fitness, generate_initial_solution, check_feasibility, \
+    check_feasibility_SA, build_grid
 
-
-numberOfDrones = 3  # Number of drones
-numberOfControlPoints = 5  # Number of control points
-initialTemperature = 100.0  # Initial temperature
-finalTemperature = 0.1  # Final temperature
-max_iterations = 1000  # Maximum number of iterations
+max_iterations = 5000  # Maximum number of iterations
 n_iterations = 100  # Number of iterations at each temperature
 
-size_of_field = 50  # Size of the field
+initial_temperature = 1000.0  # Initial temperature
+final_temperature = 0.1  # Final temperature
 
-starting_points = [(),(),()] # List of starting points
-target_points = [(),(),()] # List of ending points
-obstacles = [(),(),()] # List of obstacles
-
-
+alpha = 0.9  # Cooling rate
+beta = (final_temperature - initial_temperature) / max_iterations  # Cooling rate
 
 
-# Define your stopping criterion
-def stopping_criterion(iteration):
-    iteration > max_iterations
-    # Implement your stopping criterion logic
-    # Return True if you want to stop, otherwise False
-    pass
-
-def cooling_schedule(T_current):
-    # Define your cooling schedule here (e.g., T_current = 0.9 * T_current)
-    return T_current * 0.9
-    
+def geometric_cooling_schedule(T_current):
+    return T_current * alpha
 
 
-def simulated_annealing(initial_temperature, final_temperature):
-    current_solution = generate_initial_solution  # Initial solution is the simplified path
+def linear_cooling_schedule(T_current):
+    return T_current - beta
+
+
+def simulated_annealing(ps_list, pt_list, grid):
+    current_solution = generate_initial_solution(ps_list, pt_list, grid)  # Initial solution is the simplified path
+
+    print(current_solution)
+
     best_solution = current_solution  # Best solution found so far
+
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
     current_temperature = initial_temperature
     iteration = 0
 
-    while current_temperature > final_temperature and not stopping_criterion(iteration):
+    while current_temperature > final_temperature and not iteration > max_iterations:
         for _ in range(n_iterations):
             fitness_value = calculate_total_fitness(current_solution)
 
@@ -49,23 +43,26 @@ def simulated_annealing(initial_temperature, final_temperature):
             # r1 is a random index of a path, and r2 is a random index of a point within the path
             r1 = random.randint(0, len(current_solution) - 1)
             path = current_solution[r1]
-            r2 = random.randint(0, len(path) - 1)
+
+            if len(path) <= 2:
+                continue
+
+            r2 = random.randint(1, len(path) - 2)
 
             # Generate new x, y, z coordinates for the selected point
             x_new = list(path[r2])  # Make a copy of the selected point
 
             # Modify the x, y, z values as needed, e.g., add random perturbation
-            x_new[0] += random.uniform(-1, 1)  # Modify x
-            x_new[1] += random.uniform(-1, 1)  # Modify y
-            x_new[2] += random.uniform(-1, 1)  # Modify z
+            x_new[0] += random.uniform(-1, 1)
+            x_new[1] += random.uniform(-1, 1)
+            x_new[2] += random.uniform(-1, 1)
 
             # Create a new solution by replacing the selected point in the path
             new_solution = current_solution[:]
             new_solution[r1] = path[:r2] + [tuple(x_new)] + path[r2 + 1:]
-               
 
-            # Implement a way to perturb the solution based on your problem's characteristics
-            # You can use the simplified path to guide the perturbation
+            if not check_feasibility_SA(new_solution, obstacle_list, r1, r2):
+                continue
 
             # Calculate the change in energy (objective value)
             delta_E = calculate_total_fitness(new_solution) - fitness_value
@@ -83,10 +80,83 @@ def simulated_annealing(initial_temperature, final_temperature):
                 best_solution_value = calculate_total_fitness(current_solution)
 
         # Update temperature and iteration counter
-        current_temperature = cooling_schedule(current_temperature)
+        current_temperature = geometric_cooling_schedule(current_temperature)
         iteration += 1
     # Return the best solution found
     return best_solution
 
 
+def plot_graph(fitness_values_per_iteration, min_fitness_values, decreasing_fitness, decreasing_min):
+    def update(frame):
+        plt.clf()  # Clear the current frame
+
+        # Create two subplots side by side
+        plt_iteration = frame + 1
+
+        # Plot for Total Fitness
+        ax1 = plt.subplot(2, 2, 1)
+        ax1.plot(range(1, plt_iteration + 1), fitness_values_per_iteration[:plt_iteration], marker='o',
+                 linestyle='-')
+        ax1.set_ylabel('Total Fitness')
+        ax1.set_title('Total Fitness Evolution Over Generations')
+
+        # Plot for Minimum Fitness
+        ax2 = plt.subplot(2, 2, 2)
+        ax2.plot(range(1, plt_iteration + 1), min_fitness_values[:plt_iteration], marker='o', linestyle='-')
+        ax2.set_xlabel('Generation')
+        ax2.set_ylabel('Minimum Fitness')
+        ax2.set_title('Minimum Fitness Evolution Over Generations')
+
+        # Create small graphs (subplots) beside the main graph
+        decreasing_graph1 = plt.subplot(2, 2, 3)  # Two rows, two columns, this is the second subplot
+        decreasing_graph1.set_ylabel('Decreasing Total Fitness')
+        decreasing_graph1.set_title('Decreasing Total Fitness Evolution Over Generations')
+        decreasing_graph2 = plt.subplot(2, 2, 4)  # Two rows, two columns, this is the third subplot
+        decreasing_graph2.set_ylabel('Decreasing Minimum Fitness')
+        decreasing_graph2.set_title('Decreasing Minimum Fitness Evolution Over Generations')
+
+        # Plot something in the small graphs
+        decreasing_graph1.plot(decreasing_fitness, marker='o', linestyle='-')
+        decreasing_graph2.plot(decreasing_min, marker='o', linestyle='-')
+
+        # Create the initial plot with two subplots
+
+    fig = plt.figure(figsize=(12, 5))
+
+    plt.subplots_adjust(hspace=0.5)
+
+    fig.canvas.manager.window.wm_geometry("+50+100")
+
+    # Create the animation
+    ani = FuncAnimation(fig, update, frames=len(fitness_values_per_iteration), repeat=False, blit=False)
+
+    plt.show()
+
+
+# Example usage:
+
+numberOfDrones = 3  # Number of drones
+numberOfDrones1 = 4
+
+size_of_grid = 50  # Size of the grid
+size_of_grid1 = 30  # Size of the grid
+
+# Define start points for the drones (x, y, z)
+ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
+ps_list1 = [(5, 5, 5), (10, 10, 10), (20, 20, 20), (5, 20, 10)]
+
+
+# Define target points for the drones (x, y, z)
+pt_list = [(5, 6, 4), (0, 8, 6), (5, 4, 1)]
+pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12), (10, 25, 15)]
+
+# Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
+obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
+obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
+
+
+grid = build_grid(obstacle_list1, size_of_grid1)  # Build grid
+best_solution = simulated_annealing(ps_list1, pt_list1, grid)  # Run simulated annealing
+
+print(best_solution)  # Print best solution
 
