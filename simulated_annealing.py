@@ -42,7 +42,6 @@ def simulated_annealing(ps_list, pt_list, grid):
     while current_temperature > final_temperature and not iteration > max_iterations:
         for _ in range(n_iterations):
             fitness_value = calculate_total_fitness(current_solution)
-            afv.append(fitness_value)
             # Generate a new solution x_new
             # r1 is a random index of a path, and r2 is a random index of a point within the path
             r1 = random.randint(0, len(current_solution) - 1)
@@ -71,6 +70,7 @@ def simulated_annealing(ps_list, pt_list, grid):
             # Calculate the change in energy (objective value)
 
             delta_E = calculate_total_fitness(new_solution) - fitness_value
+            afv.append(delta_E + fitness_value)
 
 
             if delta_E < 0:
@@ -86,9 +86,10 @@ def simulated_annealing(ps_list, pt_list, grid):
                 best_solution_value = calculate_total_fitness(current_solution)
 
         # Update temperature and iteration counter
-        mfv.append(best_solution_value)
+            mfv.append(best_solution_value)
         current_temperature = geometric_cooling_schedule(current_temperature)
         iteration += 1
+
     # Return the best solution found
     return afv, mfv, best_solution
 
@@ -128,7 +129,7 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths):
 
     fig = plt.figure(figsize=(12, 5))
     plt.subplots_adjust(hspace=0.5)
-    fig.canvas.manager.window.wm_geometry("+50+100")
+    # fig.canvas.manager.window.wm_geometry("+50+100")
 
     ani = FuncAnimation(fig, update, frames=len(fitness_values_per_iteration), repeat=False, blit=False)
 
