@@ -164,8 +164,8 @@ ps_list3 = [(5, 5, 5), (20, 20, 20)]
 
 
 # Define target points for the drones (x, y, z)
-pt_list = [(5, 6, 4), (0, 8, 6), (5, 4, 1)]
-pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12), (10, 25, 15)]
+pt_list = [(5, 6, 4), (0, 8, 6)]
+pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12)]
 pt_list2 = [(15, 15, 15), (18, 18, 18)]
 pt_list3 = [(25, 25, 25), (1, 1, 1)]
 
@@ -177,6 +177,29 @@ obstacle_list3 = []
 
 
 grid = build_grid(obstacle_list, size_of_grid)  # Build grid
-afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list, grid)  # Run simulated annealing
+afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list1, grid)  # Run simulated annealing
 
 plot_graph(afv, mfv, best_solution,temperatures=temperatures)
+
+# start_time = time.time()
+
+# grid = build_grid(obstacle_list2, size_of_grid2)  # Build grid
+# afv, mfv, best_solution = simulated_annealing(ps_list2, pt_list2, grid)  # Run simulated annealing
+
+# end_time = time.time()
+# runtime = end_time - start_time
+
+# # Calculate the mean and standard deviation
+# mean = np.mean(afv)
+# std_deviation = np.std(afv)
+
+# print(f"Mean: {mean}")
+# print(f"Standard Deviation: {std_deviation}")
+# print(f"Runtime: {runtime} seconds")
+
+# mean = np.mean(mfv)
+# std_deviation = np.std(mfv)
+
+# print(f"Mean: {mean}")
+# print(f"Standard Deviation: {std_deviation}")
+# print(f"Runtime: {runtime} seconds")
