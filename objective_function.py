@@ -13,6 +13,9 @@ tolerance = 1.0  # douglas_peucker
 separation = 1  # separation between drones
 
 
+
+
+
 def euclidean_distance(start_point, end_point):
     return ((start_point[0] - end_point[0]) ** 2 + (start_point[1] - end_point[1]) ** 2 + (start_point[2] - end_point[2]) ** 2) ** 0.5
 
@@ -96,38 +99,8 @@ def check_energy_constraint(drone_paths):
     return True  # Energy constraint is satisfied
 
 
-def check_collision_constraint(drone_paths, obstacle_list):
-    """
-    Check if drone paths collide with each other or with obstacles.
 
-    Args:
-        drone_paths (list): List of drone paths where each path is a list of 3D points.
-        obstacle_list (list): List of obstacle representations.
-
-    Returns:
-        bool: True if the collision constraint is satisfied, False otherwise.
-    """
-    for i in range(len(drone_paths)):
-        for j in range(i + 1, len(drone_paths)):
-            path1 = drone_paths[i]
-            path2 = drone_paths[j]
-            for point1 in path1:
-                for point2 in path2:
-                    if euclidean_distance(point1, point2) < minimum_collision_distance:
-                        return False  # Collisions detected
-
-    for path in drone_paths:
-        for point in path:
-            for obstacle in obstacle_list:
-                for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0]), range(obstacle[0][1], obstacle[1][1])):
-                    for k in range(obstacle[0][2], obstacle[1][2]):
-                        if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
-                            return False  # Collisions detected
-                    
-    return True  # No collisions with other drones or obstacles
-
-
-def check_feasibility_SA(drone_paths, obstacle_list, path_index, point_index):
+def check_feasibility_SA(drone_tag, grid, drone_occupancy, old_point, new_point):
     """
     Check if the solution is feasible.
 
@@ -141,12 +114,25 @@ def check_feasibility_SA(drone_paths, obstacle_list, path_index, point_index):
     Returns:
         bool: True if the solution is feasible, False otherwise.
     """
+
+    #remove all points where drone_tag exists regardless of layer
+    drone_occupancies_at_old_point = drone_occupancy[old_point[0]][old_point[1]][old_point[2]]
+    drone_time_stamp = 0
+    for current_drone_info in drone_occupancies_at_old_point:
+        current_drone_tag, drone_time_stamp = current_drone_info
+        if current_drone_tag == drone_tag:
+            break
     
+    drone_occupancies_at_new_point = drone_occupancy[new_point[0]][new_point[1]][new_point[2]]
+    for current_drone_info in drone_occupancies_at_new_point:
+        current_drone_tag, current_drone_timestamp = current_drone_info
+        if current_drone_timestamp == drone_time_stamp:
+            return False
+    if(grid[new_point[0]][new_point[1]][new_point[2]] == 0):
+        drone_occupancy[old_point[0]][old_point[1]][old_point[2]].remove(current_drone_info)
+        return True
+    return False
 
-
-    modefied_point = drone_paths[path_index][point_index]
-
-    grid[modefied_point[0]][modefied_point[1]][modefied_point[2]] == 1 or drone_occupancy[modefied_point[0]][modefied_point[1]][modefied_point[2]][0] != (0, 0)
 
     # for i in range(len(drone_paths)):
     #     if i == path_index:
@@ -199,16 +185,23 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
         list: A list of control points defining the path.
     """
 
-    def is_valid(parent, point):
-        x, y, z = point
-        return 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0 and (
-                drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != layer[parent] + 1)
 
-    def get_neighbors(point):
+    def is_valid(parent, point, layer):
+        x, y, z = point
+        admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+        if(not admissible):
+           return False
+        current_drones_occupying_cell = drone_occupancy[x][y][z]
+        for _ , current_drone_depth in current_drones_occupying_cell:
+            if layer[parent] + 1 == current_drone_depth:
+                return False
+        return admissible
+
+    def get_neighbors(point,layer):
         x, y, z = point
         neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if
                      (dx != 0 or dy != 0 or dz != 0)]
-        return [neighbor for neighbor in neighbors if is_valid(point, neighbor)]
+        return [neighbor for neighbor in neighbors if is_valid(point, neighbor,layer)]
 
     start = tuple(map(int, starting_point))
     target = tuple(map(int, target_point))
@@ -230,7 +223,7 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
                 path.insert(0, current)
             return path
 
-        for neighbor in get_neighbors(current):
+        for neighbor in get_neighbors(current,layer):
             if neighbor not in came_from:
                 queue.put(neighbor)
                 came_from[neighbor] = current   
@@ -253,12 +246,10 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
     """
     all_paths = []
     simplified_paths = []
-
-    drone_occupancy = [[[(0, 0) for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
-
+    drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
-        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]] = (drone_tag, 1)
-        drone_occupancy[target_point[0]][target_point[1]][target_point[2]] = (drone_tag, 100)
+        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag, 1))
+        drone_occupancy[target_point[0]][target_point[1]][target_point[2]].append((drone_tag, 100))
 
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
@@ -268,7 +259,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
             if point in [starting_point, target_point]:
                 continue
             x, y, z = point
-            drone_occupancy[x][y][z] = (drone_tag, depth)
+            drone_occupancy[x][y][z].append((drone_tag, depth))
             depth += 1
 
         # print(path)
@@ -292,8 +283,9 @@ def generate_initial_solution(size_of_grid, starting_points, target_points, obst
         list: Initial solution.
     """
     grid = build_grid(obstacles, size_of_grid)
+    paths, drone_occupancy = get_all_paths_with_bfs(starting_points, target_points, grid)
 
-    return get_all_paths_with_bfs(starting_points, target_points, grid)
+    return paths, grid , drone_occupancy
 
 
 

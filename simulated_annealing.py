@@ -17,6 +17,10 @@ final_temperature = 0.1  # Final temperature
 alpha = 0.9  # Geometric Cooling rate
 beta = (final_temperature - initial_temperature) / max_iterations  # Linear Cooling rate
 
+#Global Variables
+grid = None
+drone_occupancy = None
+
 
 def geometric_cooling_schedule(T_current):
     return T_current * alpha
@@ -32,7 +36,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     temperature_values = []
 
 
-    current_solution = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)  # Initial solution is the simplified path
+    current_solution,grid,drone_occupancy = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)  # Initial solution is the simplified path
 
     best_solution = current_solution  # Best solution found so far
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
@@ -65,7 +69,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_solution = current_solution[:]
             new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
 
-            if not check_feasibility_SA(new_solution, obstacle_list, r1, r2):
+            if not check_feasibility_SA(r1, grid,drone_occupancy, path[r2], new_solution[r1][r2]):
                 continue
 
             # Calculate the change in energy (objective value)
@@ -206,6 +210,7 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
 
     colors = ['green', 'blue', 'red']
 
+    print(solution_paths)
     if(solution_paths != None):
         for i, path in enumerate(solution_paths):
             for point in path:
@@ -229,7 +234,7 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     # Show the plot
     plt.show()
 
-c = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+c, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
 visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, c)  # Visualize the problem
 
 
