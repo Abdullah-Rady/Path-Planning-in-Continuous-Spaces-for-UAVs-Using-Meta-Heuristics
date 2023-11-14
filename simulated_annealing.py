@@ -171,7 +171,7 @@ obstacle_list3 = []
 
 
 
-def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid):
+def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_paths):
     # Function to plot the grid
     def plot_grid(size_of_grid, ax):
         for i in range(0, size_of_grid + 1):
@@ -181,6 +181,7 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid):
             ax.plot([0, size_of_grid], [i, i], [size_of_grid, size_of_grid], color='black', linestyle='-', linewidth=1)
 
     # Function to plot points
+
     def plot_points(points, ax, color, marker):
         for point in points:
             ax.scatter(*point, c=color, marker=marker, s=100)
@@ -203,6 +204,9 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid):
     # Plot the grid
     # plot_grid(size_of_grid1, ax)
 
+    for path in solution_paths:
+        plot_points(path, ax, 'black', '_')
+
     plot_points(ps_list, ax, 'blue', 'x')  # Plot start points
     # Plot target points
     plot_points(pt_list, ax, 'green', 'o')
@@ -223,7 +227,7 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid):
 
 c = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
 
-visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1)
+visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, solution_paths=c)  # Visualize the problem
 
 
 # import time

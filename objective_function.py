@@ -256,6 +256,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
        
+        print(path)
         simplified_path = douglas_peucker(path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)
@@ -267,7 +268,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
             x, y, z = point
             drone_occupancy[x][y][z] = (drone_tag, depth)
             depth += 1
-    return simplified_paths
+    return all_paths
 
 
 def generate_initial_solution(size_of_grid, starting_points, target_points, obstacles):
