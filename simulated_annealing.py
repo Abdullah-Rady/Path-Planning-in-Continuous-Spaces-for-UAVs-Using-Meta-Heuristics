@@ -2,6 +2,7 @@ import random
 import math
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.mplot3d import Axes3D
 
 
 from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility_SA, build_grid
@@ -25,13 +26,13 @@ def linear_cooling_schedule(T_current):
     return T_current - beta
 
 
-def simulated_annealing(starting_points, target_points, obstacles):
+def simulated_annealing(size_of_grid, starting_points, target_points, obstacles):
     best_solution_values = []
     all_solutions_values = []
     temperature_values = []
 
 
-    current_solution = generate_initial_solution(starting_points, target_points, obstacles)  # Initial solution is the simplified path
+    current_solution = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)  # Initial solution is the simplified path
 
     best_solution = current_solution  # Best solution found so far
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
@@ -83,7 +84,7 @@ def simulated_annealing(starting_points, target_points, obstacles):
         temperature_values.append(current_temperature)
 
     # Return the best solution found
-    return all_solutions_values, best_solution_values, best_solution,temperatures
+    return all_solutions_values, best_solution_values, best_solution,temperature_values
 
 
 def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, temperatures):
@@ -148,14 +149,14 @@ size_of_grid3 = 30  # Size of the grid
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-ps_list1 = [(5, 5, 5), (10, 10, 10), (20, 20, 20), (5, 20, 10)]
+ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
 ps_list2 = [(1, 1, 1), (5, 5, 5)]
 ps_list3 = [(5, 5, 5), (20, 20, 20)]
 
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6)]
-pt_list1 = [(25, 25, 25), (5, 15, 20), (18, 12, 12)]
+pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
 pt_list2 = [(15, 15, 15), (18, 18, 18)]
 pt_list3 = [(25, 25, 25), (1, 1, 1)]
 
@@ -166,7 +167,65 @@ obstacle_list2 = []
 obstacle_list3 = []
 
 
-afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list1, obstacle_list)  # Run simulated annealing
+# afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
+
+
+
+def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid):
+    # Function to plot the grid
+    def plot_grid(size_of_grid, ax):
+        for i in range(0, size_of_grid + 1):
+            ax.plot([i, i], [0, size_of_grid], [0, 0], color='black', linestyle='-', linewidth=1)
+            ax.plot([0, size_of_grid], [i, i], [0, 0], color='black', linestyle='-', linewidth=1)
+            ax.plot([i, i], [0, size_of_grid], [size_of_grid, size_of_grid], color='black', linestyle='-', linewidth=1)
+            ax.plot([0, size_of_grid], [i, i], [size_of_grid, size_of_grid], color='black', linestyle='-', linewidth=1)
+
+    # Function to plot points
+    def plot_points(points, ax, color, marker):
+        for point in points:
+            ax.scatter(*point, c=color, marker=marker, s=100)
+
+    # Function to plot obstacles
+    def plot_obstacles(obstacles, ax):
+        for obstacle in obstacles:
+            starting_point = obstacle[0]
+            ending_point = obstacle[1]
+            obstacle_points =[]
+            for x_value in range(starting_point[0],ending_point[0]+1):
+                for y_value in range(starting_point[1],ending_point[1]+1):
+                    for z_value in range(starting_point[2],ending_point[2]+1):
+                        obstacle_points.append((x_value,y_value,z_value))
+            plot_points(obstacle_points, ax, 'red', 's')
+    # Create a 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Plot the grid
+    # plot_grid(size_of_grid1, ax)
+
+    plot_points(ps_list, ax, 'blue', 'x')  # Plot start points
+    # Plot target points
+    plot_points(pt_list, ax, 'green', 'o')
+
+    # Plot obstacles
+    plot_obstacles(obstacle_list, ax)
+
+    # Set labels
+    ax.set_xlabel('X-axis')
+    ax.set_ylabel('Y-axis')
+    ax.set_zlabel('Z-axis')
+
+    # Set title
+    plt.title('3D Grid with Target Points and Obstacles')
+
+    # Show the plot
+    plt.show()
+
+c = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+
+visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1)
+
+
 # import time
 # import numpy as np
 

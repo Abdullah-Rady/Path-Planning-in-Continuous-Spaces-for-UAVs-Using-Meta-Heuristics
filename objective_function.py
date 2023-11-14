@@ -9,7 +9,6 @@ maximum_energy = 100  # Maximum allowable total energy consumption per drone
 constant_speed = 1.0  # Constant speed of the drones
 energy_weight = 1  # Weight for energy consumption in the fitness function
 energy_per_distance = 1.0  # Energy consumed per unit distance traveled
-size_of_grid = 50  # Size of the 3D grid representation of the environment
 tolerance = 1.0  # douglas_peucker
 
 
@@ -193,16 +192,16 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
         list: A list of control points defining the path.
     """
 
-    def is_valid(point):
+    def is_valid(parent, point):
         x, y, z = point
         return 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0 and (
-                drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != depth)
+                drone_occupancy[x][y][z] == (0, 0) or drone_occupancy[x][y][z][1] != layer[parent] + 1)
 
     def get_neighbors(point):
         x, y, z = point
         neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if
                      (dx != 0 or dy != 0 or dz != 0)]
-        return [neighbor for neighbor in neighbors if is_valid(neighbor)]
+        return [neighbor for neighbor in neighbors if is_valid(point, neighbor)]
 
     start = tuple(map(int, starting_point))
     target = tuple(map(int, target_point))
@@ -210,10 +209,13 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
     queue.put(start)
     came_from = {}
     came_from[start] = None
-    depth = 2
+    layer = {}
+    layer[start] = 2
+
 
     while not queue.empty():
         current = queue.get()
+
         if current == target:
             path = [current]
             while current != start:
@@ -224,8 +226,8 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
         for neighbor in get_neighbors(current):
             if neighbor not in came_from:
                 queue.put(neighbor)
-                came_from[neighbor] = current
-        depth += 1
+                came_from[neighbor] = current   
+                layer[neighbor] = layer[current] + 1
 
     return []
 
@@ -253,6 +255,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
 
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
+       
         simplified_path = douglas_peucker(path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)
@@ -267,7 +270,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
     return simplified_paths
 
 
-def generate_initial_solution(starting_points, target_points, obstacles):
+def generate_initial_solution(size_of_grid, starting_points, target_points, obstacles):
     """
     Generate an initial solution to the problem using BFS.
 
@@ -298,6 +301,9 @@ def douglas_peucker(points):
     Returns:
         list: similar path with fewer number of control points.
     """
+    if len(points) < 2:
+        return 
+    
     if len(points) <= 2:
         return [points[0], points[-1]]
 
