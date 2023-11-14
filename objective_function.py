@@ -10,6 +10,7 @@ constant_speed = 1.0  # Constant speed of the drones
 energy_weight = 1  # Weight for energy consumption in the fitness function
 energy_per_distance = 1.0  # Energy consumed per unit distance traveled
 tolerance = 1.0  # douglas_peucker
+separation = 1  # separation between drones
 
 
 def euclidean_distance(start_point, end_point):
@@ -140,21 +141,27 @@ def check_feasibility_SA(drone_paths, obstacle_list, path_index, point_index):
     Returns:
         bool: True if the solution is feasible, False otherwise.
     """
+    
 
-    for i in range(len(drone_paths)):
-        if i == path_index:
-            continue
-        path1 = drone_paths[i]
-        point = drone_paths[path_index][point_index]
-        for point1 in path1:
-            if euclidean_distance(point1, point) < minimum_collision_distance:
-                return False
-    for obstacle in obstacle_list:
-        point = drone_paths[path_index][point_index]
-        for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0]), range(obstacle[0][1], obstacle[1][1])):
-            for k in range(obstacle[0][2], obstacle[1][2]):
-                if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
-                    return False
+
+    modefied_point = drone_paths[path_index][point_index]
+
+    grid[modefied_point[0]][modefied_point[1]][modefied_point[2]] == 1 or drone_occupancy[modefied_point[0]][modefied_point[1]][modefied_point[2]][0] != (0, 0)
+
+    # for i in range(len(drone_paths)):
+    #     if i == path_index:
+    #         continue
+    #     path1 = drone_paths[i]
+    #     point = drone_paths[path_index][point_index]
+    #     for point1 in path1:
+    #         if euclidean_distance(point1, point) < minimum_collision_distance:
+    #             return False
+    # for obstacle in obstacle_list:
+    #     point = drone_paths[path_index][point_index]
+    #     for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0] + separation + 1), range(obstacle[0][1], obstacle[1][1] + separation + 1)):
+    #         for k in range(obstacle[0][2], obstacle[1][2] + separation + 1):
+    #             if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
+    #                 return False
     return True
 
 
@@ -168,12 +175,12 @@ def build_grid(obstacles, size_of_grid):
     Builds a grid representation of the environment.
     0: Free space
     1: Obstacle
-    """
+    """ 
     grid = [[[0 for _ in range(size_of_grid)] for _ in range(size_of_grid)] for _ in range(size_of_grid)]
     # Set all obstacles to 1
     for obstacle in obstacles:
-        for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0]), range(obstacle[0][1], obstacle[1][1])):
-            for k in range(obstacle[0][2], obstacle[1][2]):
+        for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0] + separation + 1 ), range(obstacle[0][1], obstacle[1][1]  + separation + 1)):
+            for k in range(obstacle[0][2], obstacle[1][2] + separation + 1) :
                 grid[i][j][k] = 1
     return grid
 
@@ -255,12 +262,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
 
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
-       
-        print(path)
-        simplified_path = douglas_peucker(path)
-        all_paths.append(path)
-        simplified_paths.append(simplified_path)
-
+        
         depth = 2
         for point in path:
             if point in [starting_point, target_point]:
@@ -268,7 +270,14 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
             x, y, z = point
             drone_occupancy[x][y][z] = (drone_tag, depth)
             depth += 1
-    return all_paths
+
+        # print(path)
+        simplified_path = douglas_peucker(path)
+        all_paths.append(path)
+        simplified_paths.append(simplified_path)
+
+        
+    return all_paths, drone_occupancy
 
 
 def generate_initial_solution(size_of_grid, starting_points, target_points, obstacles):
@@ -283,6 +292,7 @@ def generate_initial_solution(size_of_grid, starting_points, target_points, obst
         list: Initial solution.
     """
     grid = build_grid(obstacles, size_of_grid)
+
     return get_all_paths_with_bfs(starting_points, target_points, grid)
 
 

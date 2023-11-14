@@ -149,20 +149,20 @@ size_of_grid3 = 30  # Size of the grid
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
+ps_list1 = [(5, 5, 5),]
 ps_list2 = [(1, 1, 1), (5, 5, 5)]
 ps_list3 = [(5, 5, 5), (20, 20, 20)]
 
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6)]
-pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
+pt_list1 = [(25, 25, 25), ]
 pt_list2 = [(15, 15, 15), (18, 18, 18)]
 pt_list3 = [(25, 25, 25), (1, 1, 1)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
-obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
+obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], ]
 obstacle_list2 = []
 obstacle_list3 = []
 
@@ -204,8 +204,12 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     # Plot the grid
     # plot_grid(size_of_grid1, ax)
 
-    for path in solution_paths:
-        plot_points(path, ax, 'black', '_')
+    colors = ['green', 'blue', 'red']
+
+    if(solution_paths != None):
+        for i, path in enumerate(solution_paths):
+            for point in path:
+                ax.plot(*point, c=colors[i], marker='_', linewidth=1)
 
     plot_points(ps_list, ax, 'blue', 'x')  # Plot start points
     # Plot target points
@@ -226,8 +230,7 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     plt.show()
 
 c = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
-
-visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, solution_paths=c)  # Visualize the problem
+visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, c)  # Visualize the problem
 
 
 # import time
