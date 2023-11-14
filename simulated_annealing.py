@@ -6,14 +6,15 @@ from matplotlib.animation import FuncAnimation
 
 from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility_SA, build_grid
 
+# Simulated Annealing Parameters
+
 max_iterations = 500  # Maximum number of iterations
 n_iterations = 10  # Number of iterations at each temperature
-
 initial_temperature = 100.0  # Initial temperature
 final_temperature = 0.1  # Final temperature
 
-alpha = 0.9  # Cooling rate
-beta = (final_temperature - initial_temperature) / max_iterations  # Cooling rate
+alpha = 0.9  # Geometric Cooling rate
+beta = (final_temperature - initial_temperature) / max_iterations  # Linear Cooling rate
 
 
 def geometric_cooling_schedule(T_current):
@@ -24,22 +25,21 @@ def linear_cooling_schedule(T_current):
     return T_current - beta
 
 
-def simulated_annealing(ps_list, pt_list, grid):
-    current_solution = generate_initial_solution(ps_list, pt_list, grid)  # Initial solution is the simplified path
+def simulated_annealing(starting_points, target_points, obstacles):
+    best_solution_values = []
+    all_solutions_values = []
+    temperature_values = []
 
-    # print(current_solution)
-    mfv = []
-    afv = []
-    temperatures = []
+
+    current_solution = generate_initial_solution(starting_points, target_points, obstacles)  # Initial solution is the simplified path
 
     best_solution = current_solution  # Best solution found so far
-
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
     current_temperature = initial_temperature
     iteration = 0
 
-    while current_temperature > final_temperature and not iteration > max_iterations:
+    while current_temperature > final_temperature and iteration <= max_iterations:
         for _ in range(n_iterations):
             fitness_value = calculate_total_fitness(current_solution)
             # Generate a new solution x_new
@@ -53,47 +53,37 @@ def simulated_annealing(ps_list, pt_list, grid):
             r2 = random.randint(1, len(path) - 2)
 
             # Generate new x, y, z coordinates for the selected point
-            x_new = list(path[r2])  # Make a copy of the selected point
+            new_point = list(path[r2])  # Make a copy of the selected point
 
             # Modify the x, y, z values as needed, e.g., add random perturbation
-            x_new[0] += random.uniform(-1, 1)
-            x_new[1] += random.uniform(-1, 1)
-            x_new[2] += random.uniform(-1, 1)
+            new_point[0] += random.uniform(-1, 1)
+            new_point[1] += random.uniform(-1, 1)
+            new_point[2] += random.uniform(-1, 1)
 
             # Create a new solution by replacing the selected point in the path
             new_solution = current_solution[:]
-            new_solution[r1] = path[:r2] + [tuple(x_new)] + path[r2 + 1:]
+            new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
 
             if not check_feasibility_SA(new_solution, obstacle_list, r1, r2):
                 continue
 
             # Calculate the change in energy (objective value)
-
-            delta_E = calculate_total_fitness(new_solution) - fitness_value
-            afv.append(delta_E + fitness_value)
-
-
-            if delta_E < 0:
-                # Accept the better solution
+            new_fitness_value = calculate_total_fitness(new_solution)
+            delta_E = new_fitness_value - fitness_value
+            if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
-            elif random.random() < math.exp(-delta_E / current_temperature):
-                # Accept the solution with a probability
-                current_solution = new_solution
-
-            # Update the best solution if necessary
-            if calculate_total_fitness(current_solution) < best_solution_value:
-                best_solution = current_solution
-                best_solution_value = calculate_total_fitness(current_solution)
+                if new_fitness_value < best_solution_value:
+                    best_solution = current_solution
+                    best_solution_value = new_fitness_value
 
         # Update temperature and iteration counter
-            mfv.append(best_solution_value)
-            temperatures.append(current_temperature)
         current_temperature = geometric_cooling_schedule(current_temperature)
         iteration += 1
-    # print(temperatures)
+        best_solution_values.append(best_solution_value)
+        temperature_values.append(current_temperature)
 
     # Return the best solution found
-    return afv, mfv, best_solution,temperatures
+    return all_solutions_values, best_solution_values, best_solution,temperatures
 
 
 def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, temperatures):
@@ -176,15 +166,14 @@ obstacle_list2 = []
 obstacle_list3 = []
 
 
-grid = build_grid(obstacle_list, size_of_grid)  # Build grid
-afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list1, grid)  # Run simulated annealing
-
-plot_graph(afv, mfv, best_solution,temperatures=temperatures)
+afv, mfv, best_solution,temperatures = simulated_annealing(ps_list, pt_list1, obstacle_list)  # Run simulated annealing
+# import time
+# import numpy as np
 
 # start_time = time.time()
 
 # grid = build_grid(obstacle_list2, size_of_grid2)  # Build grid
-# afv, mfv, best_solution = simulated_annealing(ps_list2, pt_list2, grid)  # Run simulated annealing
+# afv, mfv, best_solution, temperature = simulated_annealing(ps_list2, pt_list2, grid)  # Run simulated annealing
 
 # end_time = time.time()
 # runtime = end_time - start_time
@@ -203,3 +192,7 @@ plot_graph(afv, mfv, best_solution,temperatures=temperatures)
 # print(f"Mean: {mean}")
 # print(f"Standard Deviation: {std_deviation}")
 # print(f"Runtime: {runtime} seconds")
+
+# plot_graph(afv, mfv, best_solution,temperatures=temperatures)
+
+
