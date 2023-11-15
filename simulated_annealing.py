@@ -61,9 +61,9 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_point = list(path[r2])  # Make a copy of the selected point
 
             # Modify the x, y, z values as needed, e.g., add random perturbation
-            new_point[0] += random.uniform(-1, 1)
-            new_point[1] += random.uniform(-1, 1)
-            new_point[2] += random.uniform(-1, 1)
+            new_point[0] = int(new_point[0] + new_point[0] *random.uniform(-1, 1))
+            new_point[1] = int(new_point[1] + new_point[1] * random.uniform(-1, 1))
+            new_point[2] = int(new_point[2] + new_point[2] * random.uniform(-1, 1))
 
             # Create a new solution by replacing the selected point in the path
             new_solution = current_solution[:]
@@ -167,7 +167,7 @@ obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
 
 
-# afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
+afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
 
 
 

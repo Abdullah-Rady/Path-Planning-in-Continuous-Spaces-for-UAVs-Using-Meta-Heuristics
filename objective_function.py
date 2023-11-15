@@ -133,6 +133,7 @@ def check_energy_constraint(drone_paths):
 
 
 def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
+    print("here in cherck feas")
     """
     Check if the solution is feasible.
 
@@ -150,6 +151,7 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
     #remove all points where drone_tag exists regardless of layer
 
     x, y, z = new_point
+    # print(x, " ", y , z)
     admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
 
     if(not admissible):
@@ -165,7 +167,8 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
     #     for y in range(point_before_edited_point[1],point_after_edited_point[1]+1):
     #         for z in range(point_before_edited_point[2],point_after_edited_point[2]+1):
         drones_in_cell = drone_occupancy_copy[x][y][z]
-        for i in range(drones_in_cell):
+        print(drones_in_cell)
+        for i in range(len(drones_in_cell)):
             if drones_in_cell[i][0] == drone_tag:
                 drone_occupancy_copy.remove(drones_in_cell[i])
 
@@ -195,15 +198,19 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
         x, y, z = point
         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
         depth += 1
+    if (old_point_index + 2 < len(drone_path)):
 
-    for i in range(old_point_index + 2, len(drone_path), 1):
-        x, y, z = drone_path[i]
-        drones_in_cell = drone_occupancy_copy[x][y][z]
-        for j in range(drones_in_cell):
-            if drones_in_cell[i][0] == drone_tag:
-                drone_occupancy_copy.remove(drones_in_cell[i])
-                drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-                depth += 1
+        for i in range(old_point_index + 2, len(drone_path), 1):
+            x, y, z = drone_path[i]
+            drones_in_cell = drone_occupancy_copy[x][y][z]
+            for j in range(len(drones_in_cell)):
+                # print(i)
+                # print(len(drones_in_cell))
+                # print(len(drone_path))
+                if drones_in_cell[j][0] == drone_tag:
+                    drone_occupancy_copy.remove(drones_in_cell[i])
+                    drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+                    depth += 1
 
     # for x in range(point_after_edited_point[0],len(drone_occupancy)):
     #     for y in range(point_after_edited_point[1],len(drone_occupancy)):
