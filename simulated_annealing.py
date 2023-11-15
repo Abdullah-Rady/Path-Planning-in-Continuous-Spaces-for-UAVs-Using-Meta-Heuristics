@@ -5,7 +5,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility_SA, build_grid
+from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility
 
 # Simulated Annealing Parameters
 
@@ -231,6 +231,10 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     plt.show()
 
 c, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+
+for occupancy in drone_occupancy:
+    print(len(occupancy))
+    print("here")
 visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, c)  # Visualize the problem
 
 

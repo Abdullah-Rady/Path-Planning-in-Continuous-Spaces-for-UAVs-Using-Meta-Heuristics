@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import math
 from queue import Queue
 
 
@@ -13,6 +14,36 @@ tolerance = 1.0  # douglas_peucker
 separation = 1  # separation between drones
 
 
+
+
+def bresenham3D(x1, y1, z1, x2, y2, z2):
+    points = []
+
+    # Calculate differences and absolute differences
+    dx = x2 - x1
+    dy = y2 - y1
+    dz = z2 - z1
+
+    gcd_abc = math.gcd(math.gcd(dx, dy), dz)
+
+    # Divide each integer by the GCD
+    simplified_dx = dx // gcd_abc
+    simplified_dy = dy // gcd_abc
+    simplified_dz = dz // gcd_abc
+
+
+
+    # Set the starting point
+    x, y, z = x1, y1, z1
+    points.append((x1, y1, z1))
+    while x != x2 or y != y2 or z != z2:
+        # Add the current point to the list of points
+        x += simplified_dx
+        y += simplified_dy
+        z += simplified_dz
+        points.append((x, y, z))
+
+    return points
 
 
 
@@ -100,7 +131,7 @@ def check_energy_constraint(drone_paths):
 
 
 
-def check_feasibility_SA(drone_tag, grid, drone_occupancy, old_point, new_point):
+def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
     """
     Check if the solution is feasible.
 
@@ -122,24 +153,56 @@ def check_feasibility_SA(drone_tag, grid, drone_occupancy, old_point, new_point)
 
     if(not admissible):
         return False
+    
+    drone_occupancy_copy = drone_occupancy.copy()
+    point_before_edited_point = drone_path[old_point_index-1]
+    point_after_edited_point = drone_path[old_point_index+1]
 
-    drone_occupancies_at_old_point = drone_occupancy[old_point[0]][old_point[1]][old_point[2]]
-    drone_time_stamp = 0
-    for current_drone_info in drone_occupancies_at_old_point:
-        current_drone_tag, drone_time_stamp = current_drone_info
-        if current_drone_tag == drone_tag:
-            break
+    for x in range(point_before_edited_point[0],point_after_edited_point[0]+1):
+        for y in range(point_before_edited_point[1],point_after_edited_point[1]+1):
+            for z in range(point_before_edited_point[2],point_after_edited_point[2]+1):
+                drones_in_cell = drone_occupancy_copy[x][y][z]
+                for i in range(drones_in_cell):
+                    if drones_in_cell[i][0] == drone_tag:
+                        drone_occupancy_copy.remove(drones_in_cell[i])
+
+    path_before_new_point = get_single_path_with_bfs(point_before_edited_point,new_point,grid,drone_occupancy_copy)
+    if(len(path_before_new_point)==0):
+        return False
+    depth = 2
+    for point in path_before_new_point:
+        if point in [starting_point, target_point]:
+            continue
+        x, y, z = point
+        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+        depth += 1
+    path_after_new_point = get_single_path_with_bfs(new_point, point_after_edited_point,grid,drone_occupancy_copy)
+    if(len(path_after_new_point)==0):
+        return False
+    for point in path_after_new_point:
+        if point in [starting_point, target_point]:
+            continue
+        x, y, z = point
+        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+        depth += 1
+
     
-    drone_occupancies_at_new_point = drone_occupancy[new_point[0]][new_point[1]][new_point[2]]
-    for current_drone_info in drone_occupancies_at_new_point:
-        current_drone_tag, current_drone_timestamp = current_drone_info
-        if current_drone_timestamp == drone_time_stamp:
-            return False
-    if(grid[new_point[0]][new_point[1]][new_point[2]] == 0):
-        drone_occupancy[old_point[0]][old_point[1]][old_point[2]].remove(current_drone_info)
-        return True
-    
-    return False
+    for x in range(point_after_edited_point[0],len(drone_occupancy)):
+        for y in range(point_after_edited_point[1],len(drone_occupancy)):
+            for z in range(point_after_edited_point[2],len(drone_occupancy)):
+                drones_in_cell = drone_occupancy_copy[x][y][z]
+                for i in range(drones_in_cell):
+                    if drones_in_cell[i][0] == drone_tag:
+                        drone_occupancy_copy.remove(drones_in_cell[i])
+                        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+                        depth += 1
+    drone_occupancy = drone_occupancy_copy
+    return True
+
+
+
+
+
 
 
     # for i in range(len(drone_paths)):
@@ -200,7 +263,7 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
         if(not admissible):
            return False
         current_drones_occupying_cell = drone_occupancy[x][y][z]
-        for _ , current_drone_depth in current_drones_occupying_cell:
+        for current_drone_tag , current_drone_depth in current_drones_occupying_cell:
             if layer[parent] + 1 == current_drone_depth:
                 return False
         return admissible

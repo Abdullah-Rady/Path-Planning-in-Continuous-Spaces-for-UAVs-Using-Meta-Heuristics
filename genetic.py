@@ -124,6 +124,10 @@ def genetic(size_of_grid, starting_points, target_points, obstacles):
             parent2 = parents[i + 1]
             # Perform crossover
             child1, child2 = crossover_arithmetic(parent1, parent2)
+
+            # Check Feasibility
+
+            
             # Add children to population
             new_population.append(child1)
             new_population.append(child2)
