@@ -22,10 +22,6 @@ num_mutation = p_mutation * population_size
 num_elite = p_elite * population_size
 
 
-#Global Variables
-grid = None
-drone_occupancy = None
-
 
 # def crossover_one_point(parent1, parent2, crossover_point):
 #     child1 = np.concatenate((parent1[:crossover_point], parent2[crossover_point:]))
@@ -68,9 +64,43 @@ def mutate(gene):
 
 
 def select_elite(population, fitness):
-    elite_indices = np.argsort(fitness)[-num_elite:]
+    elite_indices = np.argsort(fitness)[num_elite:]
 
     return population[elite_indices]
+
+
+def select_worst(population, fitness):
+    worst_indices = np.argsort(fitness)[-num_crossover:]
+
+    return population[worst_indices]
+
+import random
+
+
+def fitness_proportionate_selection(population, fitness_scores, num_selected):
+    # Calculate total fitness
+    total_fitness = sum(fitness_scores)
+
+    # Calculate selection probabilities
+    selection_probabilities = [score / total_fitness for score in fitness_scores]
+
+    # Select individuals based on probabilities
+    selected_indices = []
+    for _ in range(num_selected):
+        rand_num = random.random()
+        cumulative_prob = 0
+
+        # Iterate through individuals and check if they are selected
+        for i, prob in enumerate(selection_probabilities):
+            cumulative_prob += prob
+            if rand_num <= cumulative_prob:
+                selected_indices.append(i)
+                break
+
+    # Return the selected individuals
+    selected_population = [population[i] for i in selected_indices]
+    return selected_population
+
 
 
 def genetic(size_of_grid, starting_points, target_points, obstacles):
@@ -82,19 +112,25 @@ def genetic(size_of_grid, starting_points, target_points, obstacles):
         for gene, i in enumerate(population):
             fitness[i] = calculate_total_fitness(gene)
 
-        elite = select_elite(population, fitness)
+        new_population = []
+        elites = select_elite(population, fitness)
+        new_population.append(elites)
+        
+        parents = fitness_proportionate_selection(population, fitness, 2*num_crossover)
 
-        # Perform crossover and mutation
-        offspring = []
-        num_crossover = p_cross * population_size
-        for _ in range(population_size - len(elite)):
-            parent1, parent2 = np.random.choice(population, size=2, p=fitness/fitness.sum())
+        for i in range(0, len(parents), 2):
+            # Select parents
+            parent1 = parents[i]
+            parent2 = parents[i + 1]
+            # Perform crossover
             child1, child2 = crossover_arithmetic(parent1, parent2)
-            child1 = mutate(parent1, p_mutation)
-            child2 = mutate(parent2, p_mutation)
-            offspring.extend([child1, child2])
-
-        population = np.vstack((elite, np.array(offspring)))
+            # Add children to population
+            new_population.append(child1)
+            new_population.append(child2)
+        
+        for gene in select_worst(population, fitness):
+            new_population.append(mutate(gene))
+    
 
         # Output best solution and fitness
         best_index = np.argmax(fitness)
