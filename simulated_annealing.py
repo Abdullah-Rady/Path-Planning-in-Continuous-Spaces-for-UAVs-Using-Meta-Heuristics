@@ -69,7 +69,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_solution = current_solution[:]
             new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
 
-            if not check_feasibility_SA(r1, grid,drone_occupancy, path[r2], new_solution[r1][r2]):
+            if not check_feasibility(r1, grid, drone_occupancy, path, r2, new_point, starting_points[r1], target_points[r1]):
                 continue
 
             # Calculate the change in energy (objective value)
