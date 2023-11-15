@@ -9,10 +9,10 @@ from objective_function import calculate_total_fitness, generate_initial_solutio
 
 # Simulated Annealing Parameters
 
-max_iterations = 500  # Maximum number of iterations
+max_iterations = 100  # Maximum number of iterations
 n_iterations = 10  # Number of iterations at each temperature
-initial_temperature = 100.0  # Initial temperature
-final_temperature = 0.1  # Final temperature
+initial_temperature = 1000.0  # Initial temperature
+final_temperature = 100  # Final temperature
 
 alpha = 0.9  # Geometric Cooling rate
 beta = (final_temperature - initial_temperature) / max_iterations  # Linear Cooling rate
@@ -41,11 +41,15 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     best_solution = current_solution  # Best solution found so far
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
+    print("Initial Solution Value: " , best_solution_value)
+
     current_temperature = initial_temperature
     iteration = 0
 
     while current_temperature > final_temperature and iteration <= max_iterations:
-        for _ in range(n_iterations):
+        print( "Outer Iteration:", iteration)
+        for it in range(n_iterations):
+            print("Inner Iteration: ", it)
             fitness_value = calculate_total_fitness(current_solution)
             # Generate a new solution x_new
             # r1 is a random index of a path, and r2 is a random index of a point within the path
@@ -70,19 +74,23 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
 
             if not check_feasibility(r1, grid, drone_occupancy, path, r2, new_point, starting_points[r1], target_points[r1]):
+                print("Not Feasible")
                 continue
 
             # Calculate the change in energy (objective value)
             new_fitness_value = calculate_total_fitness(new_solution)
+            print("Current fitness value:" , new_fitness_value)
             delta_E = new_fitness_value - fitness_value
             if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
                 if new_fitness_value < best_solution_value:
                     best_solution = current_solution
                     best_solution_value = new_fitness_value
+                    print("Best Solution: " , best_solution)
+                    print("Best Solution Value: " , best_solution_value)
 
         # Update temperature and iteration counter
-        current_temperature = geometric_cooling_schedule(current_temperature)
+        current_temperature = linear_cooling_schedule(current_temperature)
         iteration += 1
         best_solution_values.append(best_solution_value)
         temperature_values.append(current_temperature)
@@ -91,7 +99,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     return all_solutions_values, best_solution_values, best_solution,temperature_values
 
 
-def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, temperatures):
+def plot_graph(fitness_values_per_iteration, min_fitness_values, temperatures):
     def update(frame):
         plt.clf()  # Clear the current frame
 
@@ -145,22 +153,14 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, te
 # Example usage:
 
 size_of_grid1 = 30  # Size of the grid
-size_of_grid2 = 20  # Size of the grid
-size_of_grid3 = 30  # Size of the grid
-
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
 ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
-ps_list2 = [(1, 1, 1), (5, 5, 5)]
-ps_list3 = [(5, 5, 5), (20, 20, 20)]
-
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6)]
 pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
-pt_list2 = [(15, 15, 15), (18, 18, 18)]
-pt_list3 = [(25, 25, 25), (1, 1, 1)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
@@ -169,19 +169,11 @@ obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 
 
 afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
 
-
+plot_graph(afv, mfv, temperatures)  # Plot the graph
 
 def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_paths):
-    # Function to plot the grid
-    def plot_grid(size_of_grid, ax):
-        for i in range(0, size_of_grid + 1):
-            ax.plot([i, i], [0, size_of_grid], [0, 0], color='black', linestyle='-', linewidth=1)
-            ax.plot([0, size_of_grid], [i, i], [0, 0], color='black', linestyle='-', linewidth=1)
-            ax.plot([i, i], [0, size_of_grid], [size_of_grid, size_of_grid], color='black', linestyle='-', linewidth=1)
-            ax.plot([0, size_of_grid], [i, i], [size_of_grid, size_of_grid], color='black', linestyle='-', linewidth=1)
 
     # Function to plot points
-
     def plot_points(points, ax, color, marker):
         for point in points:
             ax.scatter(*point, c=color, marker=marker, s=100)
@@ -206,7 +198,6 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
 
     colors = ['green', 'blue', 'red']
 
-    print(solution_paths)
     if(solution_paths != None):
         for i, path in enumerate(solution_paths):
             for point in path:
@@ -230,40 +221,8 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     # Show the plot
     plt.show()
 
-c, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
-
-for occupancy in drone_occupancy:
-    print(len(occupancy))
-    print("here")
-visualize_problem(ps_list1, pt_list1, obstacle_list1, size_of_grid1, c)  # Visualize the problem
+# paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
 
 
-# import time
-# import numpy as np
-
-# start_time = time.time()
-
-# grid = build_grid(obstacle_list2, size_of_grid2)  # Build grid
-# afv, mfv, best_solution, temperature = simulated_annealing(ps_list2, pt_list2, grid)  # Run simulated annealing
-
-# end_time = time.time()
-# runtime = end_time - start_time
-
-# # Calculate the mean and standard deviation
-# mean = np.mean(afv)
-# std_deviation = np.std(afv)
-
-# print(f"Mean: {mean}")
-# print(f"Standard Deviation: {std_deviation}")
-# print(f"Runtime: {runtime} seconds")
-
-# mean = np.mean(mfv)
-# std_deviation = np.std(mfv)
-
-# print(f"Mean: {mean}")
-# print(f"Standard Deviation: {std_deviation}")
-# print(f"Runtime: {runtime} seconds")
-
-# plot_graph(afv, mfv, best_solution,temperatures=temperatures)
 
 

@@ -27,6 +27,9 @@ def bresenham3D(point1, point2):
 
     gcd_abc = math.gcd(math.gcd(dx, dy), dz)
 
+    if(gcd_abc == 0):
+        return [point1,point2]
+
     # Divide each integer by the GCD
     simplified_dx = dx // gcd_abc
     simplified_dy = dy // gcd_abc
@@ -133,7 +136,6 @@ def check_energy_constraint(drone_paths):
 
 
 def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
-    print("here in cherck feas")
     """
     Check if the solution is feasible.
 
@@ -151,7 +153,6 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
     #remove all points where drone_tag exists regardless of layer
 
     x, y, z = new_point
-    # print(x, " ", y , z)
     admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
 
     if(not admissible):
@@ -163,17 +164,14 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
 
     points = bresenham3D(point_before_edited_point, point_after_edited_point)
     for (x, y, z) in points:
-    # for x in range(point_before_edited_point[0],point_after_edited_point[0]+1):
-    #     for y in range(point_before_edited_point[1],point_after_edited_point[1]+1):
-    #         for z in range(point_before_edited_point[2],point_after_edited_point[2]+1):
-        drones_in_cell = drone_occupancy_copy[x][y][z]
-        print(drones_in_cell)
+        drones_in_cell = drone_occupancy_copy[x][y][z].copy()
         for i in range(len(drones_in_cell)):
             if drones_in_cell[i][0] == drone_tag:
-                drone_occupancy_copy.remove(drones_in_cell[i])
+                drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
+
 
     path_before_new_point = get_single_path_with_bfs(point_before_edited_point,new_point,grid,drone_occupancy_copy)
-    if(len(path_before_new_point)==0):
+    if(len(path_before_new_point)<2):
         return False
     
     simplified_path_before_new_point = douglas_peucker(path_before_new_point)
@@ -186,8 +184,7 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
         depth += 1
     path_after_new_point = get_single_path_with_bfs(new_point, point_after_edited_point,grid,drone_occupancy_copy)
 
-    if(len(path_after_new_point)==0):
-
+    if(len(path_after_new_point)<2):
         return False
     
     simplified_path_after_new_point = douglas_peucker(path_after_new_point)
@@ -199,22 +196,15 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
         depth += 1
     if (old_point_index + 2 < len(drone_path)):
-
         for i in range(old_point_index + 2, len(drone_path), 1):
             x, y, z = drone_path[i]
-            drones_in_cell = drone_occupancy_copy[x][y][z]
+            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
             for j in range(len(drones_in_cell)):
-                # print(i)
-                # print(len(drones_in_cell))
-                # print(len(drone_path))
                 if drones_in_cell[j][0] == drone_tag:
-                    drone_occupancy_copy.remove(drones_in_cell[i])
+                    drone_occupancy_copy[x][y][z].remove(drones_in_cell[j])
                     drone_occupancy_copy[x][y][z].append((drone_tag, depth))
                     depth += 1
 
-    # for x in range(point_after_edited_point[0],len(drone_occupancy)):
-    #     for y in range(point_after_edited_point[1],len(drone_occupancy)):
-    #         for z in range(point_after_edited_point[2],len(drone_occupancy)):
     last_index_before = 0
     drone_occupancy = drone_occupancy_copy
     for i in range(1, len(simplified_path_before_new_point)):
@@ -327,7 +317,6 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
                 queue.put(neighbor)
                 came_from[neighbor] = current   
                 layer[neighbor] = layer[current] + 1
-
     return []
 
 
@@ -347,8 +336,8 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
     simplified_paths = []
     drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
-        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag, 1))
-        drone_occupancy[target_point[0]][target_point[1]][target_point[2]].append((drone_tag, 100))
+        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag +1, 1))
+        drone_occupancy[target_point[0]][target_point[1]][target_point[2]].append((drone_tag +1, 100))
 
     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
@@ -361,14 +350,12 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
             drone_occupancy[x][y][z].append((drone_tag, depth))
             depth += 1
 
-        # print(path)
         simplified_path = douglas_peucker(path)
-        print(simplified_path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)
 
         
-    return all_paths, drone_occupancy
+    return simplified_paths, drone_occupancy
 
 
 def generate_initial_solution(size_of_grid, starting_points, target_points, obstacles):
@@ -405,7 +392,7 @@ def douglas_peucker(points):
         list: similar path with fewer number of control points.
     """
     if len(points) < 2:
-        return 
+        return [points[0], points[1]]
     
     if len(points) <= 2:
         return [points[0], points[-1]]
