@@ -116,6 +116,13 @@ def check_feasibility_SA(drone_tag, grid, drone_occupancy, old_point, new_point)
     """
 
     #remove all points where drone_tag exists regardless of layer
+
+    x, y, z = new_point
+    admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+
+    if(not admissible):
+        return False
+
     drone_occupancies_at_old_point = drone_occupancy[old_point[0]][old_point[1]][old_point[2]]
     drone_time_stamp = 0
     for current_drone_info in drone_occupancies_at_old_point:
@@ -131,6 +138,7 @@ def check_feasibility_SA(drone_tag, grid, drone_occupancy, old_point, new_point)
     if(grid[new_point[0]][new_point[1]][new_point[2]] == 0):
         drone_occupancy[old_point[0]][old_point[1]][old_point[2]].remove(current_drone_info)
         return True
+    
     return False
 
 
@@ -264,6 +272,7 @@ def get_all_paths_with_bfs(starting_points, target_points, grid):
 
         # print(path)
         simplified_path = douglas_peucker(path)
+        print(simplified_path)
         all_paths.append(path)
         simplified_paths.append(simplified_path)
 

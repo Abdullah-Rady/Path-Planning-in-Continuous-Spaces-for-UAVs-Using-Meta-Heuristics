@@ -144,8 +144,6 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, drone_paths, te
 
 # Example usage:
 
-
-size_of_grid = 50  # Size of the grid
 size_of_grid1 = 30  # Size of the grid
 size_of_grid2 = 20  # Size of the grid
 size_of_grid3 = 30  # Size of the grid
@@ -153,22 +151,20 @@ size_of_grid3 = 30  # Size of the grid
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-ps_list1 = [(5, 5, 5),]
+ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
 ps_list2 = [(1, 1, 1), (5, 5, 5)]
 ps_list3 = [(5, 5, 5), (20, 20, 20)]
 
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6)]
-pt_list1 = [(25, 25, 25), ]
+pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
 pt_list2 = [(15, 15, 15), (18, 18, 18)]
 pt_list3 = [(25, 25, 25), (1, 1, 1)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
-obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], ]
-obstacle_list2 = []
-obstacle_list3 = []
+obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
 
 
 # afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
