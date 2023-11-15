@@ -16,9 +16,10 @@ separation = 1  # separation between drones
 
 
 
-def bresenham3D(x1, y1, z1, x2, y2, z2):
+def bresenham3D(point1, point2):
     points = []
-
+    x1, y1, z1 = point1
+    x2, y2, z2 = point2
     # Calculate differences and absolute differences
     dx = x2 - x1
     dy = y2 - y1
@@ -158,17 +159,21 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
     point_before_edited_point = drone_path[old_point_index-1]
     point_after_edited_point = drone_path[old_point_index+1]
 
-    for x in range(point_before_edited_point[0],point_after_edited_point[0]+1):
-        for y in range(point_before_edited_point[1],point_after_edited_point[1]+1):
-            for z in range(point_before_edited_point[2],point_after_edited_point[2]+1):
-                drones_in_cell = drone_occupancy_copy[x][y][z]
-                for i in range(drones_in_cell):
-                    if drones_in_cell[i][0] == drone_tag:
-                        drone_occupancy_copy.remove(drones_in_cell[i])
+    points = bresenham3D(point_before_edited_point, point_after_edited_point)
+    for (x, y, z) in points:
+    # for x in range(point_before_edited_point[0],point_after_edited_point[0]+1):
+    #     for y in range(point_before_edited_point[1],point_after_edited_point[1]+1):
+    #         for z in range(point_before_edited_point[2],point_after_edited_point[2]+1):
+        drones_in_cell = drone_occupancy_copy[x][y][z]
+        for i in range(drones_in_cell):
+            if drones_in_cell[i][0] == drone_tag:
+                drone_occupancy_copy.remove(drones_in_cell[i])
 
     path_before_new_point = get_single_path_with_bfs(point_before_edited_point,new_point,grid,drone_occupancy_copy)
     if(len(path_before_new_point)==0):
         return False
+    
+    simplified_path_before_new_point = douglas_peucker(path_before_new_point)
     depth = 2
     for point in path_before_new_point:
         if point in [starting_point, target_point]:
@@ -177,8 +182,13 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
         depth += 1
     path_after_new_point = get_single_path_with_bfs(new_point, point_after_edited_point,grid,drone_occupancy_copy)
+
     if(len(path_after_new_point)==0):
+
         return False
+    
+    simplified_path_after_new_point = douglas_peucker(path_after_new_point)
+
     for point in path_after_new_point:
         if point in [starting_point, target_point]:
             continue
@@ -186,17 +196,28 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
         depth += 1
 
-    
-    for x in range(point_after_edited_point[0],len(drone_occupancy)):
-        for y in range(point_after_edited_point[1],len(drone_occupancy)):
-            for z in range(point_after_edited_point[2],len(drone_occupancy)):
-                drones_in_cell = drone_occupancy_copy[x][y][z]
-                for i in range(drones_in_cell):
-                    if drones_in_cell[i][0] == drone_tag:
-                        drone_occupancy_copy.remove(drones_in_cell[i])
-                        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-                        depth += 1
+    for i in range(old_point_index + 2, len(drone_path), 1):
+        x, y, z = drone_path[i]
+        drones_in_cell = drone_occupancy_copy[x][y][z]
+        for j in range(drones_in_cell):
+            if drones_in_cell[i][0] == drone_tag:
+                drone_occupancy_copy.remove(drones_in_cell[i])
+                drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+                depth += 1
+
+    # for x in range(point_after_edited_point[0],len(drone_occupancy)):
+    #     for y in range(point_after_edited_point[1],len(drone_occupancy)):
+    #         for z in range(point_after_edited_point[2],len(drone_occupancy)):
+    last_index_before = 0
     drone_occupancy = drone_occupancy_copy
+    for i in range(1, len(simplified_path_before_new_point)):
+        drone_path.insert(i+old_point_index, simplified_path_before_new_point[i])
+        last_index_before = i
+
+
+    for i in range(1, len(simplified_path_after_new_point) - 1):
+        drone_path.insert(i + last_index_before + old_point_index, simplified_path_after_new_point[i])
+
     return True
 
 
