@@ -46,14 +46,14 @@ num_elite = p_elite * population_size
 
 
 def crossover_arithmetic(parent1, parent2, grid, drone_occ_1, drone_occ_2):
-    feasible_children = False
+    feasible_children = []
     c = 0
     remaining = [i for i in range(len(parent1) - 1)]
     child1 = None
     child2 = None
 
 
-    while not feasible_children and len(remaining) > 0:
+    while len(remaining) > 0 and len(feasible_children) < 2:
         x = random.randint(0, len(remaining))
         picked_x = remaining[x]
         remaining.remove(picked_x)
@@ -63,22 +63,15 @@ def crossover_arithmetic(parent1, parent2, grid, drone_occ_1, drone_occ_2):
         drone_parent_2 = child2[picked_x].copy()
         child2[picked_x] = child1[picked_x]
         child1[picked_x] = drone_parent_2
-        feasible_children = check_feasibility(picked_x, grid, drone_occ_1, child1[picked_x], parent1[picked_x]) and check_feasibility(picked_x)
-    if (feasible_children):
-        return child1, child2
-    else:
-        False
-    # while not feasible_child_1:
+        if (check_feasibility(picked_x, grid, drone_occ_1, parent1[picked_x], child1[picked_x], parent1[picked_x][0], parent1[picked_x][-1])):
+            feasible_children.append(child1)
+        if (len(feasible_children) < 2 and check_feasibility(picked_x, grid, drone_occ_2, parent2[picked_x], child2[picked_x], parent2[picked_x][0], parent2[picked_x][-1])):
+            feasible_children.append(child2)
+    
 
-    #     child1 = alpha * parent1 + (1 - alpha) * parent2       
-    #     feasible_child_1 = check_feasibility(child1) #need to input the rest of the parameters
+    return feasible_children
 
 
-    # while not feasible_child_2:
-    #     child2 = (1 - alpha) * parent1 + alpha * parent2
-    #     feasible_child_2 = check_feasibility(child2)
-
-    return child1, child2
 
 def mutate(gene):
     feasible_gene = False

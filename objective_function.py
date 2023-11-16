@@ -134,8 +134,7 @@ def check_energy_constraint(drone_paths):
     return True  # Energy constraint is satisfied
 
 
-
-def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
+def check_feasibility_SA(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
     """
     Check if the solution is feasible.
 
@@ -215,6 +214,85 @@ def check_feasibility(drone_tag, grid, drone_occupancy, drone_path, old_point_in
     for i in range(1, len(simplified_path_after_new_point) - 1):
         drone_path.insert(i + last_index_before + old_point_index, simplified_path_after_new_point[i])
 
+    return True
+
+
+
+
+
+
+
+    # for i in range(len(drone_paths)):
+    #     if i == path_index:
+    #         continue
+    #     path1 = drone_paths[i]
+    #     point = drone_paths[path_index][point_index]
+    #     for point1 in path1:
+    #         if euclidean_distance(point1, point) < minimum_collision_distance:
+    #             return False
+    # for obstacle in obstacle_list:
+    #     point = drone_paths[path_index][point_index]
+    #     for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0] + separation + 1), range(obstacle[0][1], obstacle[1][1] + separation + 1)):
+    #         for k in range(obstacle[0][2], obstacle[1][2] + separation + 1):
+    #             if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
+    #                 return False
+    return True
+
+def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, starting_point, target_point):
+    """
+    Check if the solution is feasible.
+
+    Args:
+
+    drone_paths (list): List of drone paths where each path is a list of 3D points.
+    obstacle_list (list): List of obstacle representations.
+    path_index (int): Index of the path modified.
+    point_index (int): Index of the point modified in the path.
+
+    Returns:
+        bool: True if the solution is feasible, False otherwise.
+    """
+
+    #remove all points where drone_tag exists regardless of layer
+    for new_point in new_path:
+        x, y, z = new_point
+        admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+        if(not admissible):
+            return False
+    
+    drone_occupancy_copy = drone_occupancy.copy()
+    # point_before_edited_point = drone_path[old_point_index-1]
+    # point_after_edited_point = drone_path[old_point_index+1]
+
+    for i in range(len(old_path) - 1, 2):
+        points = bresenham3D(old_path[i], old_path[i+1])
+        for (x, y, z) in points:
+            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+            for i in range(len(drones_in_cell)):
+                if drones_in_cell[i][0] == drone_tag and (x, y ,z) != starting_point and (x, y, z) != target_point:
+                    drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
+
+    new_control_points = []
+    depth = 0
+    for i in range(len(new_path) - 1, 2):
+        new_path = get_single_path_with_bfs(new_path[i],new_path[i+1],grid,drone_occupancy_copy)
+        if(len(new_path)<2):
+            return False
+        
+        
+
+        for p in new_path:
+            x, y, z = p
+            drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+            depth += 1
+
+        simplified_new_path = douglas_peucker(new_path)
+        for point in simplified_new_path:
+            if (point not in new_control_points and point != starting_point and point != target_point):
+                new_control_points.append(point)
+
+    drone_occupancy = drone_occupancy_copy
+    
     return True
 
 
