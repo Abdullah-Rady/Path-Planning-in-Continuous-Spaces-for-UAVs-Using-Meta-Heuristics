@@ -156,22 +156,22 @@ size_of_grid1 = 30  # Size of the grid
 
 # Define start points for the drones (x, y, z)
 ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
+ps_list1 = [(5, 5, 5)]
 
 # Define target points for the drones (x, y, z)
 pt_list = [(5, 6, 4), (0, 8, 6)]
-pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
+pt_list1 = [(25, 25, 25)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
 
 
-afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
+# afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
 
-plot_graph(afv, mfv, temperatures)  # Plot the graph
+# plot_graph(afv, mfv, temperatures)  # Plot the graph
 
-def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_paths):
+def visualize_problem(ps_list, pt_list, obstacle_list, solution_paths):
 
     # Function to plot points
     def plot_points(points, ax, color, marker):
@@ -221,7 +221,9 @@ def visualize_problem(ps_list, pt_list, obstacle_list, size_of_grid, solution_pa
     # Show the plot
     plt.show()
 
-# paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+
+print("Initial Solution: ", paths)
 
 
 

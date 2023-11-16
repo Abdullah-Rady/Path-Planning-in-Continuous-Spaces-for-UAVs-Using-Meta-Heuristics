@@ -104,16 +104,13 @@ def select_worst(population, fitness):
 def fitness_proportionate_selection(population, fitness_scores, num_selected):
     # Calculate total fitness
     total_fitness = sum(fitness_scores)
-
     # Calculate selection probabilities
     selection_probabilities = [score / total_fitness for score in fitness_scores]
-
     # Select individuals based on probabilities
     selected_indices = []
     for _ in range(num_selected):
         rand_num = random.random()
         cumulative_prob = 0
-
         # Iterate through individuals and check if they are selected
         for i, prob in enumerate(selection_probabilities):
             cumulative_prob += prob
@@ -126,9 +123,14 @@ def fitness_proportionate_selection(population, fitness_scores, num_selected):
     return selected_population
 
 
+def generate_population(size_of_grid, starting_points, target_points, obstacles):
+    population = []
+    for i in range(population_size):
+        population.append(generate_initial_solution(size_of_grid, starting_points, target_points, obstacles))
+    return population
 
 def genetic(size_of_grid, starting_points, target_points, obstacles):
-    population = generate_population(chromosome_length)
+    population = generate_population(size_of_grid, starting_points, target_points, obstacles)
 
     
     for iteration in range(num_generations):
@@ -147,19 +149,21 @@ def genetic(size_of_grid, starting_points, target_points, obstacles):
             parent1 = parents[i]
             parent2 = parents[i + 1]
             # Perform crossover
-            child1, child2 = crossover_arithmetic(parent1, parent2)
-
-            # Check Feasibility
-
-            
-            # Add children to population
-            new_population.append(child1)
-            new_population.append(child2)
-        
-        for gene in select_worst(population, fitness):
+            children = crossover_arithmetic(parent1, parent2)
+            if(len(children) == 2):
+                new_population.append(child for child in children)
+            else:
+                if(len(children) == 1):
+                    new_population.append(children[0])
+                    new_population.append(parent1)
+                else:
+                    new_population.append(parent1)
+                    new_population.append(parent2)
+        # Perform mutation
+        worst_genes = select_worst(population, fitness)
+        for gene in worst_genes:
             new_population.append(mutate(gene))
     
-
         # Output best solution and fitness
         best_index = np.argmax(fitness)
         best_solution = population[best_index]

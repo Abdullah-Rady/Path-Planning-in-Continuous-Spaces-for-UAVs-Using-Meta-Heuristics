@@ -1,4 +1,5 @@
 import itertools
+import random
 import numpy as np
 import math
 from queue import Queue
@@ -12,6 +13,8 @@ energy_weight = 1  # Weight for energy consumption in the fitness function
 energy_per_distance = 1.0  # Energy consumed per unit distance traveled
 tolerance = 1.0  # douglas_peucker
 separation = 1  # separation between drones
+min_number_control_points = 1
+max_number_control_points = 3
 
 
 
@@ -24,19 +27,13 @@ def bresenham3D(point1, point2):
     dx = x2 - x1
     dy = y2 - y1
     dz = z2 - z1
-
     gcd_abc = math.gcd(math.gcd(dx, dy), dz)
-
     if(gcd_abc == 0):
         return [point1,point2]
-
     # Divide each integer by the GCD
     simplified_dx = dx // gcd_abc
     simplified_dy = dy // gcd_abc
     simplified_dz = dz // gcd_abc
-
-
-
     # Set the starting point
     x, y, z = x1, y1, z1
     points.append((x1, y1, z1))
@@ -46,9 +43,18 @@ def bresenham3D(point1, point2):
         y += simplified_dy
         z += simplified_dz
         points.append((x, y, z))
-
     return points
 
+def get_points_in_between(point1, point2):
+    points = []
+    num_points = max(abs(point1[0] - point2[0]), abs(point1[1] - point2[1]), abs(point1[2] - point2[2]))
+    for t in range(num_points + 1):
+        t_normalized = t / num_points
+        x = int(point1[0] + t_normalized * (point2[0] - point1[0]))
+        y = int(point1[1] + t_normalized * (point2[1] - point1[1]))
+        z = int(point1[2] + t_normalized * (point2[2] - point1[2]))
+        points.append((x, y, z))
+    return points
 
 
 def euclidean_distance(start_point, end_point):
@@ -185,7 +191,6 @@ def check_feasibility_SA(drone_tag, grid, drone_occupancy, drone_path, old_point
 
     if(len(path_after_new_point)<2):
         return False
-    
     simplified_path_after_new_point = douglas_peucker(path_after_new_point)
 
     for point in path_after_new_point:
@@ -210,32 +215,8 @@ def check_feasibility_SA(drone_tag, grid, drone_occupancy, drone_path, old_point
         drone_path.insert(i+old_point_index, simplified_path_before_new_point[i])
         last_index_before = i
 
-
     for i in range(1, len(simplified_path_after_new_point) - 1):
         drone_path.insert(i + last_index_before + old_point_index, simplified_path_after_new_point[i])
-
-    return True
-
-
-
-
-
-
-
-    # for i in range(len(drone_paths)):
-    #     if i == path_index:
-    #         continue
-    #     path1 = drone_paths[i]
-    #     point = drone_paths[path_index][point_index]
-    #     for point1 in path1:
-    #         if euclidean_distance(point1, point) < minimum_collision_distance:
-    #             return False
-    # for obstacle in obstacle_list:
-    #     point = drone_paths[path_index][point_index]
-    #     for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0] + separation + 1), range(obstacle[0][1], obstacle[1][1] + separation + 1)):
-    #         for k in range(obstacle[0][2], obstacle[1][2] + separation + 1):
-    #             if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
-    #                 return False
     return True
 
 def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, starting_point, target_point):
@@ -298,26 +279,6 @@ def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, star
 
 
 
-
-
-
-    # for i in range(len(drone_paths)):
-    #     if i == path_index:
-    #         continue
-    #     path1 = drone_paths[i]
-    #     point = drone_paths[path_index][point_index]
-    #     for point1 in path1:
-    #         if euclidean_distance(point1, point) < minimum_collision_distance:
-    #             return False
-    # for obstacle in obstacle_list:
-    #     point = drone_paths[path_index][point_index]
-    #     for i, j in itertools.product(range(obstacle[0][0], obstacle[1][0] + separation + 1), range(obstacle[0][1], obstacle[1][1] + separation + 1)):
-    #         for k in range(obstacle[0][2], obstacle[1][2] + separation + 1):
-    #             if euclidean_distance(point, (i, j, k)) < minimum_collision_distance:
-    #                 return False
-    return True
-
-
 def build_grid(obstacles, size_of_grid):
     """
     Args:
@@ -359,7 +320,7 @@ def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy
         if(not admissible):
            return False
         current_drones_occupying_cell = drone_occupancy[x][y][z]
-        for current_drone_tag , current_drone_depth in current_drones_occupying_cell:
+        for _ , current_drone_depth in current_drones_occupying_cell:
             if layer[parent] + 1 == current_drone_depth:
                 return False
         return admissible
@@ -448,10 +409,134 @@ def generate_initial_solution(size_of_grid, starting_points, target_points, obst
         list: Initial solution.
     """
     grid = build_grid(obstacles, size_of_grid)
-    paths, drone_occupancy = get_all_paths_with_bfs(starting_points, target_points, grid)
+    paths, drone_occupancy = generate_initial_paths(starting_points, target_points, grid)
 
     return paths, grid , drone_occupancy
 
+def generate_initial_paths(starting_points, target_points, grid):
+    '''
+    Generate initial random paths for all drones
+    starting_points (list): A list of the start points (x, y, z).
+    target_points (list): A list of the target points (x, y, z).
+    grid (list): A 3D grid representation of the environment.
+    '''
+    paths = []
+    drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
+    drone_tag = 1
+    for starting_point, target_point in zip(starting_points, target_points):
+        print("Generating path number: ", drone_tag)
+        path,drone_occupancy = generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
+        drone_tag += 1
+        paths.append(path)
+    return paths,drone_occupancy
+
+def get_valid_points(grid,starting_point,target_point):
+        min_x = min(starting_point[0], target_point[0])
+        max_x = max(starting_point[0], target_point[0])
+        min_y = min(starting_point[1], target_point[1])
+        max_y = max(starting_point[1], target_point[1])
+        min_z = min(starting_point[2], target_point[2])
+        max_z = max(starting_point[2], target_point[2])
+
+        valid_points = []
+        for x in range(min_x, max_x + 1):
+            for y in range(min_y, max_y + 1):
+                for z in range(min_z, max_z + 1):
+                    if grid[x][y][z] == 0 and (x, y, z) != starting_point and (x, y, z) != target_point:
+                        valid_points.append((x, y, z))
+        return valid_points
+def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial_depth):
+    valid_points = []
+    for point in points:
+        current_depth = initial_depth
+        points_in_between = get_points_in_between(starting_point, point)
+        rejected_Flag = False
+        for inner_point in points_in_between:
+            if(grid[inner_point[0]][inner_point[1]][inner_point[2]]==1):
+                rejected_Flag = True
+                break
+            drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
+            for _, depth in drones_in_cell:
+                if(current_depth == depth):
+                    rejected_Flag = True
+                    break
+            current_depth+=1
+        if(rejected_Flag):
+            continue
+        valid_points.append(point)
+    return valid_points
+
+        
+
+
+def generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy):
+    '''
+    Generate initial random path for a single drone
+    starting_point (tuple): The start point (x, y, z).
+    target_point (tuple): The target point (x, y, z).
+    '''
+    def is_valid(point, depth):
+        x, y, z = point
+        admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+        if(not admissible):
+            print("Not admissible")
+            return False
+        current_drones_occupying_cell = drone_occupancy[x][y][z]
+        for drone_tag , current_drone_depth in current_drones_occupying_cell:
+            if depth == current_drone_depth:
+                print("Already occupied ", drone_tag)
+                return False
+        return admissible
+    break_outer_loop = False
+    path = []
+    drone_occupancy_copy = []
+    depth = 1
+    valid_points = get_valid_points(grid,starting_point,target_point)
+    path_found = False
+    while len(valid_points) > 0:
+        # print("Trying to generate path: " , drone_tag)
+        path = []
+        path.append(starting_point)
+        current_point = starting_point
+        drone_occupancy_copy = drone_occupancy.copy()
+        num_control_points = random.randint(min_number_control_points,max_number_control_points)
+        for _ in range(num_control_points):
+            next_valid_points = get_all_valid_next_points(grid,current_point,valid_points,drone_occupancy_copy,depth)
+            point = random.choice(next_valid_points)
+            valid_points.remove(point)
+            current_point = point
+            path.append(point)
+        path.append(target_point)
+        print(path)
+        # path = douglas_peucker(path)
+        depth = 1
+        i = 0
+        for i in range(len(path) - 1,1):
+            if break_outer_loop:
+                break_outer_loop = False
+                break
+            first_point = path[i]
+            second_point = path[i+1]
+            points_in_between = bresenham3D(first_point, second_point)
+            for point in points_in_between:
+                if(is_valid(point, depth)):
+                    drone_occupancy_copy[point[0]][point[1]][point[2]].append((drone_tag,depth))
+                    depth += 1
+                else:
+                    break_outer_loop = True
+                    break
+        if i == len(path) - 2:
+            path_found = True
+            break
+    if path_found:
+        return path, drone_occupancy_copy
+    else:
+        print("Path not found")
+        return [], drone_occupancy_copy
+
+
+    
+    
 
 
 
