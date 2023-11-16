@@ -5,7 +5,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility
+from objective_function import calculate_total_fitness, generate_initial_solution,new_check_feasibility
 
 # Simulated Annealing Parameters
 
@@ -38,6 +38,8 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
 
     current_solution,grid,drone_occupancy = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)  # Initial solution is the simplified path
 
+    print("Initial Solution: ", current_solution)
+
     best_solution = current_solution  # Best solution found so far
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
@@ -49,7 +51,6 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     while current_temperature > final_temperature and iteration <= max_iterations:
         print( "Outer Iteration:", iteration)
         for it in range(n_iterations):
-            # print("Inner Iteration: ", it)
             fitness_value = calculate_total_fitness(current_solution)
             # Generate a new solution x_new
             # r1 is a random index of a path, and r2 is a random index of a point within the path
@@ -59,35 +60,35 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             if len(path) <= 2:
                 continue
 
-            r2 = random.randint(1, len(path) - 2)
-
-            # Generate new x, y, z coordinates for the selected point
-            new_point = list(path[r2])  # Make a copy of the selected point
-
-            # Modify the x, y, z values as needed, e.g., add random perturbation
-            new_point[0] = int(new_point[0] + new_point[0] *random.uniform(-1, 1))
-            new_point[1] = int(new_point[1] + new_point[1] * random.uniform(-1, 1))
-            new_point[2] = int(new_point[2] + new_point[2] * random.uniform(-1, 1))
+            new_path = []
+            for i in range(1,len(path)-1): 
+                point = path[i]
+                new_point = list(point)  # Make a copy of the selected point
+                new_point[0] = int(new_point[0] + new_point[0] *random.uniform(-0.2, 0.2))
+                new_point[1] = int(new_point[1] + new_point[1] * random.uniform(-0.2, 0.2))
+                new_point[2] = int(new_point[2] + new_point[2] * random.uniform(-0.2, 0.2))
+                new_path.append(tuple(new_point))
 
             # Create a new solution by replacing the selected point in the path
             new_solution = current_solution[:]
-            new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
+            new_solution[r1] = new_path
+            print(new_solution)
 
-            if not check_feasibility(r1, grid, drone_occupancy, path, r2, new_point, starting_points[r1], target_points[r1]):
-                # print("Not Feasible")
-                continue
+            new_solution = new_check_feasibility(new_solution,grid)
+
+            print(new_solution)
 
             # Calculate the change in energy (objective value)
             new_fitness_value = calculate_total_fitness(new_solution)
-            # print("Current fitness value:" , new_fitness_value)
+            print("Current fitness value:" , new_fitness_value)
             delta_E = new_fitness_value - fitness_value
             if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
                 if new_fitness_value < best_solution_value:
                     best_solution = current_solution
                     best_solution_value = new_fitness_value
-                    # print("Best Solution: " , best_solution)
-                    # print("Best Solution Value: " , best_solution_value)
+                    print("Best Solution: " , best_solution)
+                    print("Best Solution Value: " , best_solution_value)
 
         # Update temperature and iteration counter
         current_temperature = linear_cooling_schedule(current_temperature)
@@ -155,19 +156,17 @@ def plot_graph(fitness_values_per_iteration, min_fitness_values, temperatures):
 size_of_grid1 = 30  # Size of the grid
 
 # Define start points for the drones (x, y, z)
-ps_list = [(0, 0, 5), (5, 0, 3), (1, 1, 2)]
-ps_list1 = [(5, 5, 5)]
+ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
 
 # Define target points for the drones (x, y, z)
-pt_list = [(5, 6, 4), (0, 8, 6)]
-pt_list1 = [(25, 25, 25)]
+pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
 obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
 
 
-# afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
+afv, mfv, best_solution,temperatures = simulated_annealing(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Run simulated annealing
 
 # plot_graph(afv, mfv, temperatures)  # Plot the graph
 
@@ -221,9 +220,14 @@ def visualize_problem(ps_list, pt_list, obstacle_list, solution_paths):
     # Show the plot
     plt.show()
 
-paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+# paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
 
-print("Initial Solution: ", paths)
+# #save drone_occupancy to json file
+# import json
+# with open('drone_occupancy.json', 'w') as fp:
+#     json.dump(drone_occupancy, fp)
+
+# print("Initial Solution: ", paths)
 
 
 
