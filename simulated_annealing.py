@@ -41,7 +41,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     best_solution = current_solution  # Best solution found so far
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
-    print("Initial Solution Value: " , best_solution_value)
+    # print("Initial Solution Value: " , best_solution_value)
 
     current_temperature = initial_temperature
     iteration = 0
@@ -49,7 +49,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     while current_temperature > final_temperature and iteration <= max_iterations:
         print( "Outer Iteration:", iteration)
         for it in range(n_iterations):
-            print("Inner Iteration: ", it)
+            # print("Inner Iteration: ", it)
             fitness_value = calculate_total_fitness(current_solution)
             # Generate a new solution x_new
             # r1 is a random index of a path, and r2 is a random index of a point within the path
@@ -74,20 +74,20 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_solution[r1] = path[:r2] + [tuple(new_point)] + path[r2 + 1:]
 
             if not check_feasibility(r1, grid, drone_occupancy, path, r2, new_point, starting_points[r1], target_points[r1]):
-                print("Not Feasible")
+                # print("Not Feasible")
                 continue
 
             # Calculate the change in energy (objective value)
             new_fitness_value = calculate_total_fitness(new_solution)
-            print("Current fitness value:" , new_fitness_value)
+            # print("Current fitness value:" , new_fitness_value)
             delta_E = new_fitness_value - fitness_value
             if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
                 if new_fitness_value < best_solution_value:
                     best_solution = current_solution
                     best_solution_value = new_fitness_value
-                    print("Best Solution: " , best_solution)
-                    print("Best Solution Value: " , best_solution_value)
+                    # print("Best Solution: " , best_solution)
+                    # print("Best Solution Value: " , best_solution_value)
 
         # Update temperature and iteration counter
         current_temperature = linear_cooling_schedule(current_temperature)

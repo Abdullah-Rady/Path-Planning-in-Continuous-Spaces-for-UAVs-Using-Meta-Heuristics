@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility_SA, build_grid
+from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility, build_grid
 
 #Genetic Algorithm Parameters
 num_generations = 200
@@ -14,7 +14,7 @@ population_size  = 5
 p_elite = 0.2
 p_cross = 0.6
 p_mutation = 0.2
-alpha = 0.7
+# alpha = 0.7
 
 
 num_crossover = p_cross * population_size
@@ -45,20 +45,51 @@ num_elite = p_elite * population_size
 #     return child1, child2
 
 
-def crossover_arithmetic(parent1, parent2):
-    child1 = alpha * parent1 + (1 - alpha) * parent2
-    child2 = (1 - alpha) * parent1 + alpha * parent2
+def crossover_arithmetic(parent1, parent2, grid, drone_occ_1, drone_occ_2):
+    feasible_children = False
+    c = 0
+    remaining = [i for i in range(len(parent1) - 1)]
+    child1 = None
+    child2 = None
+
+
+    while not feasible_children and len(remaining) > 0:
+        x = random.randint(0, len(remaining))
+        picked_x = remaining[x]
+        remaining.remove(picked_x)
+        # drone_parent_1 = parent1[x]
+        child1 = parent2.copy()
+        child2 = parent1.copy()
+        drone_parent_2 = child2[picked_x].copy()
+        child2[picked_x] = child1[picked_x]
+        child1[picked_x] = drone_parent_2
+        feasible_children = check_feasibility(picked_x, grid, drone_occ_1, child1[picked_x], parent1[picked_x]) and check_feasibility(picked_x)
+    if (feasible_children):
+        return child1, child2
+    else:
+        False
+    # while not feasible_child_1:
+
+    #     child1 = alpha * parent1 + (1 - alpha) * parent2       
+    #     feasible_child_1 = check_feasibility(child1) #need to input the rest of the parameters
+
+
+    # while not feasible_child_2:
+    #     child2 = (1 - alpha) * parent1 + alpha * parent2
+    #     feasible_child_2 = check_feasibility(child2)
 
     return child1, child2
 
 def mutate(gene):
-    new_point = []
-    new_point[0] += random.uniform(-1, 1)
-    new_point[1] += random.uniform(-1, 1)
-    new_point[2] += random.uniform(-1, 1)
-
-    random_r1 = random.randint(0, len(gene))
-    gene[random_r1] += new_point
+    feasible_gene = False
+    while not feasible_gene:
+        new_point = (random.randint(-1, 1), random.randint(-1, 1), random.randint(-1, 1))
+        # new_point[0] += random.uniform(-1, 1)
+        # new_point[1] += random.uniform(-1, 1)
+        # new_point[2] += random.uniform(-1, 1)
+        random_r1 = random.randint(0, len(gene) - 1)
+        gene[random_r1] += new_point
+        feasible_gene = check_feasibility(gene)
 
     return gene
 
@@ -74,7 +105,7 @@ def select_worst(population, fitness):
 
     return population[worst_indices]
 
-import random
+
 
 
 def fitness_proportionate_selection(population, fitness_scores, num_selected):
