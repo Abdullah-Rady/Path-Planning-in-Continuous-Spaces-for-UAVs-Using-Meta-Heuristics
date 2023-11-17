@@ -9,7 +9,7 @@ from objective_function import calculate_total_fitness, generate_initial_solutio
 
 # Simulated Annealing Parameters
 
-max_iterations = 100  # Maximum number of iterations
+max_iterations = 1000  # Maximum number of iterations
 n_iterations = 1  # Number of iterations at each temperature
 initial_temperature = 1000.0  # Initial temperature
 final_temperature = 100  # Final temperature
@@ -46,6 +46,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
     print("Initial Solution: ", current_solution)
 
     best_solution = current_solution  # Best solution found so far
+    best_drone_occupancy = drone_occupancy
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
 
@@ -90,6 +91,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
                 if new_fitness_value < best_solution_value:
                     best_solution = current_solution
                     best_solution_value = new_fitness_value
+                    best_drone_occupancy = drone_occupancy
                     print("Best Solution: " , best_solution)
                     print("Best Solution Value: " , best_solution_value)
         # Update temperature and iteration counter
@@ -99,7 +101,7 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
         temperature_values.append(current_temperature)
 
     # Return the best solution found
-    return all_solutions_values, best_solution_values, drone_occupancy, best_solution,temperature_values
+    return all_solutions_values, best_solution_values, best_drone_occupancy, best_solution,temperature_values
 
 
 def plot_graph(fitness_values_per_iteration, min_fitness_values, temperatures):
@@ -184,6 +186,9 @@ with open('temperatures.json', 'w') as fp:
 
 with open('best_solution.json','w') as fp:
     json.dump(best_solution, fp)
+
+with open('best_solution_value.json','w') as fp:
+    json.dump(calculate_total_fitness(best_solution), fp)
 # plot_graph(afv, mfv, temperatures)  # Plot the graph
 
 def visualize_problem(ps_list, pt_list, obstacle_list, solution_paths):

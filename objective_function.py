@@ -291,6 +291,105 @@ def get_closest_valid_point(invalid_point,valid_points):
     return closest_point
 
 
+def remove_from_occurence(path,drone_occupancy,drone_tag):
+        for i in range(len(path)-1):
+            first_point = path[i]
+            second_point = path[i+1]
+            points_in_between = get_points_in_between(first_point, second_point)
+            for point in points_in_between:
+                x, y, z = point
+                drones_in_cell = drone_occupancy[x][y][z].copy()
+                for j in range(len(drones_in_cell)):
+                    if drones_in_cell[j][0] == drone_tag:
+                        drone_occupancy[x][y][z].remove(drones_in_cell[j])
+        return drone_occupancy
+
+
+def tweak_path_crossover(drone_paths1,drone_paths2,index_paths_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid):
+    new_paths_1 = []
+    new_paths_2 = []
+    for index_path_to_be_kept in range(index_paths_to_be_tweaked_after+1):
+        new_paths_1.append(drone_paths1[index_path_to_be_kept])
+        new_paths_2.append(drone_paths2[index_path_to_be_kept])
+    for index_path_to_be_tweaked in range(index_paths_to_be_tweaked_after+1,len(drone_paths1)):
+        old_path1 = drone_paths1[index_path_to_be_tweaked]
+        old_path2 = drone_paths2[index_path_to_be_tweaked]
+        drone_occupancy_copy1 = drone_occupancy1.copy()
+        drone_occupancy_copy2 = drone_occupancy2.copy()
+        drone_occupancy_copy1 = remove_from_occurence(old_path1,drone_occupancy_copy1,index_path_to_be_tweaked+1)
+        drone_occupancy_copy2 = remove_from_occurence(old_path2,drone_occupancy_copy2,index_path_to_be_tweaked+1)
+    for index_path_to_be_tweaked in range(index_paths_to_be_tweaked_after+1,len(drone_paths1)):
+        new_path_1 , drone_occupancy_copy1 = tweak_path_cross(drone_paths1,index_path_to_be_tweaked, drone_paths2[index_path_to_be_tweaked],drone_occupancy_copy1,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
+        new_path_2 , drone_occupancy_copy2 = tweak_path_cross(drone_paths2,index_path_to_be_tweaked, drone_paths1[index_path_to_be_tweaked],drone_occupancy_copy2,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
+        if(len(new_path_1) == 0 or len(new_path_2) == 0):
+            return [],[],[],[]
+        new_paths_1.append(new_path_1)
+        new_paths_2.append(new_path_2)
+    return new_paths_1,new_paths_2,drone_occupancy_copy1,drone_occupancy_copy2
+
+
+
+
+def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid):
+    print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+    old_path = drone_paths[index_path_to_be_tweaked]
+    drone_occupancy_copy = drone_occupancy.copy()
+    for i in range(len(old_path)-1):
+        first_point = old_path[i]
+        second_point = old_path[i+1]
+        points_in_between = get_points_in_between(first_point, second_point)
+        for point in points_in_between:
+            x, y, z = point
+            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+            for j in range(len(drones_in_cell)):
+                if drones_in_cell[j][0] == index_path_to_be_tweaked + 1:
+                    drone_occupancy[x][y][z].remove(drones_in_cell[j])
+    new_path = []
+    new_path.append(starting_point)
+    valid_points = get_valid_points(grid,starting_point,target_point)
+    depth = 0
+    path_length = min(len(old_path), len(path_to_be_inserted))
+    end = path_length-2
+    for i in range(end):
+        valid_next_points = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
+        if(i == end - 1):
+            valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
+            new_valid_next_points = []
+            for point in valid_previous_points:
+                if point in valid_next_points:
+                    new_valid_next_points.append(point)
+            valid_next_points = new_valid_next_points
+        if(old_path[i+1] in valid_next_points):
+            valid_next_points.remove(old_path[i+1])
+        if(len(valid_next_points) == 0):
+            print("Path cannot be tweaked")
+            return []
+        new_point = get_closest_valid_point(path_to_be_inserted[i+1],valid_next_points)
+        valid_points.remove(new_point)
+        new_path.append(new_point)
+    new_path.append(target_point)
+    print("Checking validity of new path: " , new_path)
+    processed_points = []
+    for i in range(len(new_path)-1):
+        first_point = new_path[i]
+        second_point = new_path[i+1]
+        points_in_between = get_points_in_between(first_point, second_point)
+        for point in points_in_between:
+            if(point in processed_points):
+                continue
+            if(is_valid(point, depth,grid,drone_occupancy_copy)):
+                x, y, z = point
+                processed_points.append(point)
+                drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
+                depth += 1
+            else:
+                print("Im here")
+                return []
+    new_path = douglas_peucker(new_path)
+    return new_path,drone_occupancy_copy
+    
+    
+
 def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid):
     print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     old_path = drone_paths[index_path_to_be_tweaked]
@@ -343,6 +442,8 @@ def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_po
                 drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
                 depth += 1
             else:
+                with open("drone_occupancy.json", "w") as write_file:
+                    json.dump(drone_occupancy_copy, write_file)
                 print("Im here")
                 return []
     new_path = douglas_peucker(new_path)
