@@ -2,6 +2,7 @@ import itertools
 import random
 import numpy as np
 import math
+import json
 from queue import Queue
 
 
@@ -48,7 +49,7 @@ def bresenham3D(point1, point2):
 def get_points_in_between(point1, point2):
     points = []
     num_points = max(abs(point1[0] - point2[0]), abs(point1[1] - point2[1]), abs(point1[2] - point2[2]))
-    for t in range(1,num_points+1):
+    for t in range(0,num_points+1):
         t_normalized = t / num_points
         x = int(point1[0] + t_normalized * (point2[0] - point1[0]))
         y = int(point1[1] + t_normalized * (point2[1] - point1[1]))
@@ -279,6 +280,76 @@ def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, star
     return True
 
 
+def get_closest_valid_point(invalid_point,valid_points):
+    min_distance = euclidean_distance(invalid_point,valid_points[0])
+    closest_point = valid_points[0]
+    for point in valid_points:
+        distance = euclidean_distance(invalid_point,point)
+        if(distance < min_distance):
+            min_distance = distance
+            closest_point = point
+    return closest_point
+
+
+def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid):
+    print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+    old_path = drone_paths[index_path_to_be_tweaked]
+    drone_occupancy_copy = drone_occupancy.copy()
+    for i in range(len(old_path)-1):
+        first_point = old_path[i]
+        second_point = old_path[i+1]
+        points_in_between = get_points_in_between(first_point, second_point)
+        for point in points_in_between:
+            x, y, z = point
+            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+            for j in range(len(drones_in_cell)):
+                if drones_in_cell[j][0] == index_path_to_be_tweaked + 1:
+                    drone_occupancy[x][y][z].remove(drones_in_cell[j])
+    new_path = []
+    new_path.append(starting_point)
+    valid_points = get_valid_points(grid,starting_point,target_point)
+    depth = 0
+    end = len(old_path)-2
+    for i in range(end):
+        valid_next_points = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
+        if(i == end - 1):
+            valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
+            new_valid_next_points = []
+            for point in valid_previous_points:
+                if point in valid_next_points:
+                    new_valid_next_points.append(point)
+            valid_next_points = new_valid_next_points
+        if(old_path[i+1] in valid_next_points):
+            valid_next_points.remove(old_path[i+1])
+        if(len(valid_next_points) == 0):
+            print("Path cannot be tweaked")
+            return []
+        new_point = get_closest_valid_point(old_path[i+1],valid_next_points)
+        valid_points.remove(new_point)
+        new_path.append(new_point)
+    new_path.append(target_point)
+    print("Checking validity of new path: " , new_path)
+    processed_points = []
+    for i in range(len(new_path)-1):
+        first_point = new_path[i]
+        second_point = new_path[i+1]
+        points_in_between = get_points_in_between(first_point, second_point)
+        for point in points_in_between:
+            if(point in processed_points):
+                continue
+            if(is_valid(point, depth,grid,drone_occupancy_copy)):
+                x, y, z = point
+                processed_points.append(point)
+                drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
+                depth += 1
+            else:
+                print("Im here")
+                return []
+    new_path = douglas_peucker(new_path)
+    return new_path,drone_occupancy_copy
+
+
+
 
 
 def new_check_feasibility(drone_paths,grid):
@@ -290,33 +361,42 @@ def new_check_feasibility(drone_paths,grid):
         path = drone_paths[i]
         valid = True
         drone_occupancy_copy = drone_occupancy.copy()
-        new_path = path[:]
+        new_path = []
         valid_points = get_valid_points(grid,path[0],path[-1])
         depth = 0
         for i in range(len(path) - 1):
+            pathCounter = 0
             first_point = path[i]
             second_point = path[i+1]
+            next_valid_points = []
             if(not valid):
                 valid = True
                 print("Replacing Faulty point")
-                second_point = random.choice(get_all_valid_next_points(grid,first_point,valid_points,drone_occupancy_copy,depth))
+                if(len(next_valid_points)==0):
+                    next_valid_points = get_all_valid_next_points(grid,first_point,valid_points,drone_occupancy_copy,depth)
+                second_point = get_closest_valid_point(path[i+1],next_valid_points) 
+                next_valid_points.remove(second_point)
             points_in_between = get_points_in_between(first_point, second_point)
             valid_points_copy = valid_points.copy()
             for point in points_in_between:
                 if(is_valid(point, depth,grid,drone_occupancy_copy) and point in valid_points):
                     valid_points.remove(point)
+                    next_valid_points = []
                     drone_occupancy_copy[point[0]][point[1]][point[2]].append((i+1,depth))
                     depth += 1
                 else:
                     print("Invalid point")
-                    valid = False
+                    if(len(next_valid_points)>0 or pathCounter == 0):
+                        pathCounter+=1
+                        valid = False
+                    else:
+                        return []
                     break
             if(valid):
-                new_path.append(second_point)
+                new_path.append(first_point)
                 valid_points = valid_points_copy
                 drone_occupancy = drone_occupancy_copy
                 i+=1
-
         new_drone_paths.append(new_path)
     return new_drone_paths
 
@@ -465,10 +545,10 @@ def generate_initial_paths(starting_points, target_points, grid):
     drone_tag = 1
     for starting_point, target_point in zip(starting_points, target_points):
         # print("Generating path number: ", drone_tag)
-        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag, 0))
-        path,drone_occupancy = generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
+        path,new_drone_occupancy = generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
+        drone_occupancy = new_drone_occupancy
         drone_tag += 1
-        path = douglas_peucker(path)
+        # path = douglas_peucker(path)
         paths.append(path)
     return paths,drone_occupancy
 
@@ -487,6 +567,7 @@ def get_valid_points(grid,starting_point,target_point):
                     if grid[x][y][z] == 0 and (x, y, z) != starting_point and (x, y, z) != target_point:
                         valid_points.append((x, y, z))
         return valid_points
+
 def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial_depth):
     valid_points = []
     for point in points:
@@ -502,15 +583,40 @@ def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial
                 if(current_depth == depth):
                     rejected_Flag = True
                     break
+            if(rejected_Flag):
+                break
             current_depth+=1
         if(rejected_Flag):
             continue
         valid_points.append(point)
     return valid_points
 
+def get_all_valid_previous_points(grid,target_point,points,drone_occupancy,initial_depth):
+    valid_points = []
+    for point in points:
+        current_depth = initial_depth
+        points_in_between = get_points_in_between(point, target_point)
+        rejected_Flag = False
+        for inner_point in points_in_between:
+            if(grid[inner_point[0]][inner_point[1]][inner_point[2]]==1):
+                rejected_Flag = True
+                break
+            drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
+            for _, depth in drones_in_cell:
+                if(current_depth == depth):
+                    rejected_Flag = True
+                    break
+            if(rejected_Flag):
+                break
+            current_depth+=1
+        if(rejected_Flag):
+            continue
+        valid_points.append(point)
+    return valid_points
         
 def is_valid(point, depth,grid,drone_occupancy):
     x, y, z = point
+    print("Checking Validity of point: " , point)
     admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
     if(not admissible):
         print("Not admissible")
@@ -518,7 +624,9 @@ def is_valid(point, depth,grid,drone_occupancy):
     current_drones_occupying_cell = drone_occupancy[x][y][z]
     for drone_tag , current_drone_depth in current_drones_occupying_cell:
         if depth == current_drone_depth:
-            print("Already occupied ", drone_tag)
+            with open('drone_occupancy.json', 'w') as fp:
+                json.dump(drone_occupancy, fp)
+            print("Already occupied by drone ", drone_tag)
             return False
     return admissible
 
@@ -531,7 +639,7 @@ def generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
     break_outer_loop = False
     path = []
     drone_occupancy_copy = []
-    depth = 1
+    depth = 0
     valid_points = get_valid_points(grid,starting_point,target_point)
     path_found = False
     while len(valid_points) > 0:
@@ -540,14 +648,22 @@ def generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
         current_point = starting_point
         drone_occupancy_copy = drone_occupancy.copy()
         num_control_points = random.randint(min_number_control_points,max_number_control_points)
-        for _ in range(num_control_points):
+        for i in range(num_control_points):
             next_valid_points = get_all_valid_next_points(grid,current_point,valid_points,drone_occupancy_copy,depth)
+            if(i == num_control_points - 1):
+                valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
+                new_valid_next_points = []
+                for point in valid_previous_points:
+                    if point in next_valid_points:
+                        new_valid_next_points.append(point)
+                next_valid_points = new_valid_next_points
             point = random.choice(next_valid_points)
             valid_points.remove(point)
             current_point = point
             path.append(point)
         path.append(target_point)
-        depth = 1
+        print("Ouput path: ", path)
+        depth = 0
         i = 0
         for i in range(len(path) - 1):
             if break_outer_loop:
