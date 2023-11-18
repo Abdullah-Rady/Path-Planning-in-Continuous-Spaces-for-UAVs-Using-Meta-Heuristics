@@ -143,141 +143,141 @@ def check_energy_constraint(drone_paths):
 
 
 
-def check_feasibility_SA(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
-    """
-    Check if the solution is feasible.
+# def check_feasibility_SA(drone_tag, grid, drone_occupancy, drone_path, old_point_index, new_point,starting_point,target_point):
+#     """
+#     Check if the solution is feasible.
 
-    Args:
+#     Args:
 
-    drone_paths (list): List of drone paths where each path is a list of 3D points.
-    obstacle_list (list): List of obstacle representations.
-    path_index (int): Index of the path modified.
-    point_index (int): Index of the point modified in the path.
+#     drone_paths (list): List of drone paths where each path is a list of 3D points.
+#     obstacle_list (list): List of obstacle representations.
+#     path_index (int): Index of the path modified.
+#     point_index (int): Index of the point modified in the path.
 
-    Returns:
-        bool: True if the solution is feasible, False otherwise.
-    """
+#     Returns:
+#         bool: True if the solution is feasible, False otherwise.
+#     """
 
-    #remove all points where drone_tag exists regardless of layer
+#     #remove all points where drone_tag exists regardless of layer
 
-    x, y, z = new_point
-    admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+#     x, y, z = new_point
+#     admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
 
-    if(not admissible):
-        return False
+#     if(not admissible):
+#         return False
     
-    drone_occupancy_copy = drone_occupancy.copy()
-    point_before_edited_point = drone_path[old_point_index-1]
-    point_after_edited_point = drone_path[old_point_index+1]
+#     drone_occupancy_copy = drone_occupancy.copy()
+#     point_before_edited_point = drone_path[old_point_index-1]
+#     point_after_edited_point = drone_path[old_point_index+1]
 
-    points = get_points_in_between(point_before_edited_point, point_after_edited_point)
-    for (x, y, z) in points:
-        drones_in_cell = drone_occupancy_copy[x][y][z].copy()
-        for i in range(len(drones_in_cell)):
-            if drones_in_cell[i][0] == drone_tag:
-                drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
+#     points = get_points_in_between(point_before_edited_point, point_after_edited_point)
+#     for (x, y, z) in points:
+#         drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+#         for i in range(len(drones_in_cell)):
+#             if drones_in_cell[i][0] == drone_tag:
+#                 drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
 
 
-    path_before_new_point = get_single_path_with_bfs(point_before_edited_point,new_point,grid,drone_occupancy_copy)
-    if(len(path_before_new_point)<2):
-        return False
+#     path_before_new_point = get_single_path_with_bfs(point_before_edited_point,new_point,grid,drone_occupancy_copy)
+#     if(len(path_before_new_point)<2):
+#         return False
     
-    simplified_path_before_new_point = douglas_peucker(path_before_new_point)
-    depth = 2
-    for point in path_before_new_point:
-        if point in [starting_point, target_point]:
-            continue
-        x, y, z = point
-        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-        depth += 1
-    path_after_new_point = get_single_path_with_bfs(new_point, point_after_edited_point,grid,drone_occupancy_copy)
+#     simplified_path_before_new_point = douglas_peucker(path_before_new_point)
+#     depth = 2
+#     for point in path_before_new_point:
+#         if point in [starting_point, target_point]:
+#             continue
+#         x, y, z = point
+#         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+#         depth += 1
+#     path_after_new_point = get_single_path_with_bfs(new_point, point_after_edited_point,grid,drone_occupancy_copy)
 
-    if(len(path_after_new_point)<2):
-        return False
-    simplified_path_after_new_point = douglas_peucker(path_after_new_point)
+#     if(len(path_after_new_point)<2):
+#         return False
+#     simplified_path_after_new_point = douglas_peucker(path_after_new_point)
 
-    for point in path_after_new_point:
-        if point in [starting_point, target_point]:
-            continue
-        x, y, z = point
-        drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-        depth += 1
-    if (old_point_index + 2 < len(drone_path)):
-        for i in range(old_point_index + 2, len(drone_path), 1):
-            x, y, z = drone_path[i]
-            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
-            for j in range(len(drones_in_cell)):
-                if drones_in_cell[j][0] == drone_tag:
-                    drone_occupancy_copy[x][y][z].remove(drones_in_cell[j])
-                    drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-                    depth += 1
+#     for point in path_after_new_point:
+#         if point in [starting_point, target_point]:
+#             continue
+#         x, y, z = point
+#         drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+#         depth += 1
+#     if (old_point_index + 2 < len(drone_path)):
+#         for i in range(old_point_index + 2, len(drone_path), 1):
+#             x, y, z = drone_path[i]
+#             drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+#             for j in range(len(drones_in_cell)):
+#                 if drones_in_cell[j][0] == drone_tag:
+#                     drone_occupancy_copy[x][y][z].remove(drones_in_cell[j])
+#                     drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+#                     depth += 1
 
-    last_index_before = 0
-    drone_occupancy = drone_occupancy_copy
-    for i in range(1, len(simplified_path_before_new_point)):
-        drone_path.insert(i+old_point_index, simplified_path_before_new_point[i])
-        last_index_before = i
+#     last_index_before = 0
+#     drone_occupancy = drone_occupancy_copy
+#     for i in range(1, len(simplified_path_before_new_point)):
+#         drone_path.insert(i+old_point_index, simplified_path_before_new_point[i])
+#         last_index_before = i
 
-    for i in range(1, len(simplified_path_after_new_point) - 1):
-        drone_path.insert(i + last_index_before + old_point_index, simplified_path_after_new_point[i])
-    return True
+#     for i in range(1, len(simplified_path_after_new_point) - 1):
+#         drone_path.insert(i + last_index_before + old_point_index, simplified_path_after_new_point[i])
+#     return True
 
-def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, starting_point, target_point):
-    """
-    Check if the solution is feasible.
+# def check_feasibility(drone_tag, grid, drone_occupancy, old_path, new_path, starting_point, target_point):
+#     """
+#     Check if the solution is feasible.
 
-    Args:
+#     Args:
 
-    drone_paths (list): List of drone paths where each path is a list of 3D points.
-    obstacle_list (list): List of obstacle representations.
-    path_index (int): Index of the path modified.
-    point_index (int): Index of the point modified in the path.
+#     drone_paths (list): List of drone paths where each path is a list of 3D points.
+#     obstacle_list (list): List of obstacle representations.
+#     path_index (int): Index of the path modified.
+#     point_index (int): Index of the point modified in the path.
 
-    Returns:
-        bool: True if the solution is feasible, False otherwise.
-    """
+#     Returns:
+#         bool: True if the solution is feasible, False otherwise.
+#     """
 
-    #remove all points where drone_tag exists regardless of layer
-    for new_point in new_path:
-        x, y, z = new_point
-        admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
-        if(not admissible):
-            return False
+#     #remove all points where drone_tag exists regardless of layer
+#     for new_point in new_path:
+#         x, y, z = new_point
+#         admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+#         if(not admissible):
+#             return False
     
-    drone_occupancy_copy = drone_occupancy.copy()
-    # point_before_edited_point = drone_path[old_point_index-1]
-    # point_after_edited_point = drone_path[old_point_index+1]
+#     drone_occupancy_copy = drone_occupancy.copy()
+#     # point_before_edited_point = drone_path[old_point_index-1]
+#     # point_after_edited_point = drone_path[old_point_index+1]
 
-    for i in range(len(old_path) - 1, 2):
-        points = bresenham3D(old_path[i], old_path[i+1])
-        for (x, y, z) in points:
-            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
-            for i in range(len(drones_in_cell)):
-                if drones_in_cell[i][0] == drone_tag and (x, y ,z) != starting_point and (x, y, z) != target_point:
-                    drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
+#     for i in range(len(old_path) - 1, 2):
+#         points = bresenham3D(old_path[i], old_path[i+1])
+#         for (x, y, z) in points:
+#             drones_in_cell = drone_occupancy_copy[x][y][z].copy()
+#             for i in range(len(drones_in_cell)):
+#                 if drones_in_cell[i][0] == drone_tag and (x, y ,z) != starting_point and (x, y, z) != target_point:
+#                     drone_occupancy_copy[x][y][z].remove(drones_in_cell[i])
 
-    new_control_points = []
-    depth = 0
-    for i in range(len(new_path) - 1, 2):
-        new_path = get_single_path_with_bfs(new_path[i],new_path[i+1],grid,drone_occupancy_copy)
-        if(len(new_path)<2):
-            return False
+#     new_control_points = []
+#     depth = 0
+#     for i in range(len(new_path) - 1, 2):
+#         new_path = get_single_path_with_bfs(new_path[i],new_path[i+1],grid,drone_occupancy_copy)
+#         if(len(new_path)<2):
+#             return False
         
         
 
-        for p in new_path:
-            x, y, z = p
-            drone_occupancy_copy[x][y][z].append((drone_tag, depth))
-            depth += 1
+#         for p in new_path:
+#             x, y, z = p
+#             drone_occupancy_copy[x][y][z].append((drone_tag, depth))
+#             depth += 1
 
-        simplified_new_path = douglas_peucker(new_path)
-        for point in simplified_new_path:
-            if (point not in new_control_points and point != starting_point and point != target_point):
-                new_control_points.append(point)
+#         simplified_new_path = douglas_peucker(new_path)
+#         for point in simplified_new_path:
+#             if (point not in new_control_points and point != starting_point and point != target_point):
+#                 new_control_points.append(point)
 
-    drone_occupancy = drone_occupancy_copy
+#     drone_occupancy = drone_occupancy_copy
     
-    return True
+#     return True
 
 
 def get_closest_valid_point(invalid_point,valid_points):
@@ -292,36 +292,45 @@ def get_closest_valid_point(invalid_point,valid_points):
 
 
 def remove_from_occurence(path,drone_occupancy,drone_tag):
-        for i in range(len(path)-1):
-            first_point = path[i]
-            second_point = path[i+1]
-            points_in_between = get_points_in_between(first_point, second_point)
-            for point in points_in_between:
-                x, y, z = point
-                drones_in_cell = drone_occupancy[x][y][z].copy()
-                for j in range(len(drones_in_cell)):
-                    if drones_in_cell[j][0] == drone_tag:
-                        drone_occupancy[x][y][z].remove(drones_in_cell[j])
+        # for i in range(len(path)-1):
+        #     first_point = path[i]
+        #     second_point = path[i+1]
+        #     points_in_between = get_points_in_between(first_point, second_point)
+        #     for point in points_in_between:
+        #         x, y, z = point
+        #         drones_in_cell = drone_occupancy[x][y][z].copy()
+        #         for j in range(len(drones_in_cell)):
+        #             if drones_in_cell[j][0] == drone_tag:
+        #                 drone_occupancy[x][y][z].remove(drones_in_cell[j])
+        for i in range(len(drone_occupancy)):
+            for j in range(len(drone_occupancy)):
+                for k in range(len(drone_occupancy)):
+                    drones_in_cell = drone_occupancy[i][j][k].copy()
+                    for l in range(len(drones_in_cell)):
+                        if(drones_in_cell[l][0] == drone_tag):
+                            drone_occupancy[i][j][k].remove(drones_in_cell[l])
         return drone_occupancy
 
 
-def tweak_path_crossover(drone_paths1,drone_paths2,index_paths_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid):
+def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid):
+    print("Crossing over after drone: ", index_to_be_tweaked_after + 1)
     new_paths_1 = []
     new_paths_2 = []
-    for index_path_to_be_kept in range(index_paths_to_be_tweaked_after+1):
+    drone_occupancy_copy1 = drone_occupancy1.copy()
+    drone_occupancy_copy2 = drone_occupancy2.copy()
+    for index_path_to_be_kept in range(index_to_be_tweaked_after+1):
         new_paths_1.append(drone_paths1[index_path_to_be_kept])
         new_paths_2.append(drone_paths2[index_path_to_be_kept])
-    for index_path_to_be_tweaked in range(index_paths_to_be_tweaked_after+1,len(drone_paths1)):
+    for index_path_to_be_tweaked in range(index_to_be_tweaked_after+1,len(drone_paths1)):
         old_path1 = drone_paths1[index_path_to_be_tweaked]
         old_path2 = drone_paths2[index_path_to_be_tweaked]
-        drone_occupancy_copy1 = drone_occupancy1.copy()
-        drone_occupancy_copy2 = drone_occupancy2.copy()
         drone_occupancy_copy1 = remove_from_occurence(old_path1,drone_occupancy_copy1,index_path_to_be_tweaked+1)
         drone_occupancy_copy2 = remove_from_occurence(old_path2,drone_occupancy_copy2,index_path_to_be_tweaked+1)
-    for index_path_to_be_tweaked in range(index_paths_to_be_tweaked_after+1,len(drone_paths1)):
+    for index_path_to_be_tweaked in range(index_to_be_tweaked_after+1,len(drone_paths1)):
         new_path_1 , drone_occupancy_copy1 = tweak_path_cross(drone_paths1,index_path_to_be_tweaked, drone_paths2[index_path_to_be_tweaked],drone_occupancy_copy1,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
         new_path_2 , drone_occupancy_copy2 = tweak_path_cross(drone_paths2,index_path_to_be_tweaked, drone_paths1[index_path_to_be_tweaked],drone_occupancy_copy2,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
         if(len(new_path_1) == 0 or len(new_path_2) == 0):
+            print("Crossover failed")
             return [],[],[],[]
         new_paths_1.append(new_path_1)
         new_paths_2.append(new_path_2)
@@ -334,16 +343,6 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
     print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
-    for i in range(len(old_path)-1):
-        first_point = old_path[i]
-        second_point = old_path[i+1]
-        points_in_between = get_points_in_between(first_point, second_point)
-        for point in points_in_between:
-            x, y, z = point
-            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
-            for j in range(len(drones_in_cell)):
-                if drones_in_cell[j][0] == index_path_to_be_tweaked + 1:
-                    drone_occupancy[x][y][z].remove(drones_in_cell[j])
     new_path = []
     new_path.append(starting_point)
     valid_points = get_valid_points(grid,starting_point,target_point)
@@ -351,155 +350,141 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
     path_length = min(len(old_path), len(path_to_be_inserted))
     end = path_length-2
     for i in range(end):
-        valid_next_points = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
+        valid_next_points,point_depths = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
         if(i == end - 1):
-            valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
-            new_valid_next_points = []
-            for point in valid_previous_points:
-                if point in valid_next_points:
-                    new_valid_next_points.append(point)
-            valid_next_points = new_valid_next_points
+            previous_valid_points = get_all_valid_previous_points(grid,target_point,valid_next_points,drone_occupancy,point_depths)
+            valid_next_points = previous_valid_points
         if(old_path[i+1] in valid_next_points):
             valid_next_points.remove(old_path[i+1])
         if(len(valid_next_points) == 0):
             print("Path cannot be tweaked")
-            return []
+            return [],[]
         new_point = get_closest_valid_point(path_to_be_inserted[i+1],valid_next_points)
         valid_points.remove(new_point)
         new_path.append(new_point)
     new_path.append(target_point)
     print("Checking validity of new path: " , new_path)
-    processed_points = []
+    # new_path = douglas_peucker(new_path)
     for i in range(len(new_path)-1):
         first_point = new_path[i]
         second_point = new_path[i+1]
         points_in_between = get_points_in_between(first_point, second_point)
+        if i!= 0:
+            points_in_between.pop(0)
         for point in points_in_between:
-            if(point in processed_points):
-                continue
             if(is_valid(point, depth,grid,drone_occupancy_copy)):
                 x, y, z = point
-                processed_points.append(point)
                 drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
                 depth += 1
             else:
-                print("Im here")
+                print("Could not crossover")
                 return []
-    new_path = douglas_peucker(new_path)
     return new_path,drone_occupancy_copy
     
-    
+def contains_tag(drone_occupancy,drone_tag):
+    for i in range(len(drone_occupancy)):
+        for j in range(len(drone_occupancy)):
+            for k in range(len(drone_occupancy)):
+                for l in range(len(drone_occupancy[i][j][k])):
+                    if(drone_occupancy[i][j][k][l][0] == drone_tag):
+                        return True
+    return False
 
 def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid):
     print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
-    for i in range(len(old_path)-1):
-        first_point = old_path[i]
-        second_point = old_path[i+1]
-        points_in_between = get_points_in_between(first_point, second_point)
-        for point in points_in_between:
-            x, y, z = point
-            drones_in_cell = drone_occupancy_copy[x][y][z].copy()
-            for j in range(len(drones_in_cell)):
-                if drones_in_cell[j][0] == index_path_to_be_tweaked + 1:
-                    drone_occupancy[x][y][z].remove(drones_in_cell[j])
+    drone_occupancy_copy = remove_from_occurence(old_path,drone_occupancy_copy,index_path_to_be_tweaked+1)
     new_path = []
     new_path.append(starting_point)
     valid_points = get_valid_points(grid,starting_point,target_point)
     depth = 0
     end = len(old_path)-2
     for i in range(end):
-        valid_next_points = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
+        valid_next_points, point_depths = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
         if(i == end - 1):
-            valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
-            new_valid_next_points = []
-            for point in valid_previous_points:
-                if point in valid_next_points:
-                    new_valid_next_points.append(point)
-            valid_next_points = new_valid_next_points
+            previous_valid_points = get_all_valid_previous_points(grid,target_point,valid_next_points,drone_occupancy,point_depths)
+            valid_next_points = previous_valid_points
         if(old_path[i+1] in valid_next_points):
             valid_next_points.remove(old_path[i+1])
         if(len(valid_next_points) == 0):
             print("Path cannot be tweaked")
-            return []
+            return [],[]
         new_point = get_closest_valid_point(old_path[i+1],valid_next_points)
         valid_points.remove(new_point)
         new_path.append(new_point)
     new_path.append(target_point)
+    # new_path = douglas_peucker(new_path)
     print("Checking validity of new path: " , new_path)
-    processed_points = []
     for i in range(len(new_path)-1):
         first_point = new_path[i]
         second_point = new_path[i+1]
         points_in_between = get_points_in_between(first_point, second_point)
+        if(i!= 0):
+            points_in_between.pop(0)
+        # print("Points in between: ", points_in_between)
         for point in points_in_between:
-            if(point in processed_points):
-                continue
             if(is_valid(point, depth,grid,drone_occupancy_copy)):
                 x, y, z = point
-                processed_points.append(point)
+                # print("Valid point: ", point, "Depth: ", depth)
                 drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
                 depth += 1
             else:
-                with open("drone_occupancy.json", "w") as write_file:
-                    json.dump(drone_occupancy_copy, write_file)
                 print("Im here")
-                return []
-    new_path = douglas_peucker(new_path)
+                return [],[]
     return new_path,drone_occupancy_copy
 
 
 
 
 
-def new_check_feasibility(drone_paths,grid):
-    print("Checking feasibility")
-    drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
-    new_drone_paths = []
-    i=0
-    while i < len(drone_paths):
-        path = drone_paths[i]
-        valid = True
-        drone_occupancy_copy = drone_occupancy.copy()
-        new_path = []
-        valid_points = get_valid_points(grid,path[0],path[-1])
-        depth = 0
-        for i in range(len(path) - 1):
-            pathCounter = 0
-            first_point = path[i]
-            second_point = path[i+1]
-            next_valid_points = []
-            if(not valid):
-                valid = True
-                print("Replacing Faulty point")
-                if(len(next_valid_points)==0):
-                    next_valid_points = get_all_valid_next_points(grid,first_point,valid_points,drone_occupancy_copy,depth)
-                second_point = get_closest_valid_point(path[i+1],next_valid_points) 
-                next_valid_points.remove(second_point)
-            points_in_between = get_points_in_between(first_point, second_point)
-            valid_points_copy = valid_points.copy()
-            for point in points_in_between:
-                if(is_valid(point, depth,grid,drone_occupancy_copy) and point in valid_points):
-                    valid_points.remove(point)
-                    next_valid_points = []
-                    drone_occupancy_copy[point[0]][point[1]][point[2]].append((i+1,depth))
-                    depth += 1
-                else:
-                    print("Invalid point")
-                    if(len(next_valid_points)>0 or pathCounter == 0):
-                        pathCounter+=1
-                        valid = False
-                    else:
-                        return []
-                    break
-            if(valid):
-                new_path.append(first_point)
-                valid_points = valid_points_copy
-                drone_occupancy = drone_occupancy_copy
-                i+=1
-        new_drone_paths.append(new_path)
-    return new_drone_paths
+# def new_check_feasibility(drone_paths,grid):
+#     print("Checking feasibility")
+#     drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
+#     new_drone_paths = []
+#     i=0
+#     while i < len(drone_paths):
+#         path = drone_paths[i]
+#         valid = True
+#         drone_occupancy_copy = drone_occupancy.copy()
+#         new_path = []
+#         valid_points = get_valid_points(grid,path[0],path[-1])
+#         depth = 0
+#         for i in range(len(path) - 1):
+#             pathCounter = 0
+#             first_point = path[i]
+#             second_point = path[i+1]
+#             next_valid_points = []
+#             if(not valid):
+#                 valid = True
+#                 print("Replacing Faulty point")
+#                 if(len(next_valid_points)==0):
+#                     next_valid_points = get_all_valid_next_points(grid,first_point,valid_points,drone_occupancy_copy,depth)
+#                 second_point = get_closest_valid_point(path[i+1],next_valid_points) 
+#                 next_valid_points.remove(second_point)
+#             points_in_between = get_points_in_between(first_point, second_point)
+#             valid_points_copy = valid_points.copy()
+#             for point in points_in_between:
+#                 if(is_valid(point, depth,grid,drone_occupancy_copy) and point in valid_points):
+#                     valid_points.remove(point)
+#                     next_valid_points = []
+#                     drone_occupancy_copy[point[0]][point[1]][point[2]].append((i+1,depth))
+#                     depth += 1
+#                 else:
+#                     print("Invalid point")
+#                     if(len(next_valid_points)>0 or pathCounter == 0):
+#                         pathCounter+=1
+#                         valid = False
+#                     else:
+#                         return []
+#                     break
+#             if(valid):
+#                 new_path.append(first_point)
+#                 valid_points = valid_points_copy
+#                 drone_occupancy = drone_occupancy_copy
+#                 i+=1
+#         new_drone_paths.append(new_path)
+#     return new_drone_paths
 
 
 def build_grid(obstacles, size_of_grid):
@@ -522,101 +507,101 @@ def build_grid(obstacles, size_of_grid):
     return grid
 
 
-def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy):
-    """
-    Get a path from the start point to the target point using BFS.
+# def get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy):
+#     """
+#     Get a path from the start point to the target point using BFS.
 
-    Args:
-        starting_point (tuple): The start point (x, y, z).
-        target_point (tuple): The target point (x, y, z).
-        grid (list): A 3D grid representation of the obstacle placement.
-        drone_occupancy (list): A 3D grid representation of the drones placement.
+#     Args:
+#         starting_point (tuple): The start point (x, y, z).
+#         target_point (tuple): The target point (x, y, z).
+#         grid (list): A 3D grid representation of the obstacle placement.
+#         drone_occupancy (list): A 3D grid representation of the drones placement.
 
-    Returns:
-        list: A list of control points defining the path.
-    """
+#     Returns:
+#         list: A list of control points defining the path.
+#     """
 
-    def is_valid(parent, point, layer):
-        x, y, z = point
-        admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
-        if(not admissible):
-           return False
-        current_drones_occupying_cell = drone_occupancy[x][y][z]
-        for _ , current_drone_depth in current_drones_occupying_cell:
-            if layer[parent] + 1 == current_drone_depth:
-                return False
-        return admissible
+#     def is_valid(parent, point, layer):
+#         x, y, z = point
+#         admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
+#         if(not admissible):
+#            return False
+#         current_drones_occupying_cell = drone_occupancy[x][y][z]
+#         for _ , current_drone_depth in current_drones_occupying_cell:
+#             if layer[parent] + 1 == current_drone_depth:
+#                 return False
+#         return admissible
 
-    def get_neighbors(point,layer):
-        x, y, z = point
-        neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if
-                     (dx != 0 or dy != 0 or dz != 0)]
-        return [neighbor for neighbor in neighbors if is_valid(point, neighbor,layer)]
+#     def get_neighbors(point,layer):
+#         x, y, z = point
+#         neighbors = [(x + dx, y + dy, z + dz) for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1] if
+#                      (dx != 0 or dy != 0 or dz != 0)]
+#         return [neighbor for neighbor in neighbors if is_valid(point, neighbor,layer)]
 
-    start = tuple(map(int, starting_point))
-    target = tuple(map(int, target_point))
-    queue = Queue()
-    queue.put(start)
-    came_from = {}
-    came_from[start] = None
-    layer = {}
-    layer[start] = 2
-
-
-    while not queue.empty():
-        current = queue.get()
-
-        if current == target:
-            path = [current]
-            while current != start:
-                current = came_from[current]
-                path.insert(0, current)
-            return path
-
-        for neighbor in get_neighbors(current,layer):
-            if neighbor not in came_from:
-                queue.put(neighbor)
-                came_from[neighbor] = current   
-                layer[neighbor] = layer[current] + 1
-    return []
+#     start = tuple(map(int, starting_point))
+#     target = tuple(map(int, target_point))
+#     queue = Queue()
+#     queue.put(start)
+#     came_from = {}
+#     came_from[start] = None
+#     layer = {}
+#     layer[start] = 2
 
 
-def get_all_paths_with_bfs(starting_points, target_points, grid):
-    """
-    Get all paths from the start points to the target points using BFS.
+#     while not queue.empty():
+#         current = queue.get()
 
-    Args:
-        starting_points (list): A list of he start points (x, y, z).
-        target_points (list): A list of the target points (x, y, z).
-        grid (list): A 3D grid representation of the environment.
+#         if current == target:
+#             path = [current]
+#             while current != start:
+#                 current = came_from[current]
+#                 path.insert(0, current)
+#             return path
 
-    Returns:
-        list: A list of paths, where each path is a list of control points.
-    """
-    all_paths = []
-    simplified_paths = []
-    drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
-    for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
-        drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag +1, 1))
-        drone_occupancy[target_point[0]][target_point[1]][target_point[2]].append((drone_tag +1, 100))
+#         for neighbor in get_neighbors(current,layer):
+#             if neighbor not in came_from:
+#                 queue.put(neighbor)
+#                 came_from[neighbor] = current   
+#                 layer[neighbor] = layer[current] + 1
+#     return []
 
-    for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
-        path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
+
+# def get_all_paths_with_bfs(starting_points, target_points, grid):
+#     """
+#     Get all paths from the start points to the target points using BFS.
+
+#     Args:
+#         starting_points (list): A list of he start points (x, y, z).
+#         target_points (list): A list of the target points (x, y, z).
+#         grid (list): A 3D grid representation of the environment.
+
+#     Returns:
+#         list: A list of paths, where each path is a list of control points.
+#     """
+#     all_paths = []
+#     simplified_paths = []
+#     drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]
+#     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
+#         drone_occupancy[starting_point[0]][starting_point[1]][starting_point[2]].append((drone_tag +1, 1))
+#         drone_occupancy[target_point[0]][target_point[1]][target_point[2]].append((drone_tag +1, 100))
+
+#     for drone_tag, (starting_point, target_point) in enumerate(zip(starting_points, target_points), start=1):
+#         path = get_single_path_with_bfs(starting_point, target_point, grid, drone_occupancy)
         
-        depth = 2
-        for point in path:
-            if point in [starting_point, target_point]:
-                continue
-            x, y, z = point
-            drone_occupancy[x][y][z].append((drone_tag, depth))
-            depth += 1
+#         depth = 2
+#         for point in path:
+#             if point in [starting_point, target_point]:
+#                 continue
+#             x, y, z = point
+#             drone_occupancy[x][y][z].append((drone_tag, depth))
+#             depth += 1
 
-        simplified_path = douglas_peucker(path)
-        all_paths.append(path)
-        simplified_paths.append(simplified_path)
+#         simplified_path = douglas_peucker(path)
+#         all_paths.append(path)
+#         simplified_paths.append(simplified_path)
 
         
-    return simplified_paths, drone_occupancy
+#     return simplified_paths, drone_occupancy
 
 def generate_initial_solution(size_of_grid, starting_points, target_points, obstacles):
     """
@@ -671,6 +656,7 @@ def get_valid_points(grid,starting_point,target_point):
 
 def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial_depth):
     valid_points = []
+    point_depths = []
     for point in points:
         current_depth = initial_depth
         points_in_between = get_points_in_between(starting_point, point)
@@ -690,12 +676,13 @@ def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial
         if(rejected_Flag):
             continue
         valid_points.append(point)
-    return valid_points
+        point_depths.append(current_depth)
+    return valid_points, point_depths
 
-def get_all_valid_previous_points(grid,target_point,points,drone_occupancy,initial_depth):
+def get_all_valid_previous_points(grid,target_point,points,drone_occupancy,initial_depths):
     valid_points = []
-    for point in points:
-        current_depth = initial_depth
+    for i,point in enumerate(points):
+        current_depth = initial_depths[i]
         points_in_between = get_points_in_between(point, target_point)
         rejected_Flag = False
         for inner_point in points_in_between:
@@ -717,17 +704,15 @@ def get_all_valid_previous_points(grid,target_point,points,drone_occupancy,initi
         
 def is_valid(point, depth,grid,drone_occupancy):
     x, y, z = point
-    print("Checking Validity of point: " , point)
+    # print("Checking Validity of point: " , point)
     admissible = 0 <= x < len(grid) and 0 <= y < len(grid) and 0 <= z < len(grid) and grid[x][y][z] == 0
     if(not admissible):
-        print("Not admissible")
+        print(point, " Not admissible")
         return False
     current_drones_occupying_cell = drone_occupancy[x][y][z]
     for drone_tag , current_drone_depth in current_drones_occupying_cell:
         if depth == current_drone_depth:
-            with open('drone_occupancy.json', 'w') as fp:
-                json.dump(drone_occupancy, fp)
-            print("Already occupied by drone ", drone_tag)
+            print(point, " Already occupied by drone ", drone_tag)
             return False
     return admissible
 
@@ -750,20 +735,15 @@ def generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
         drone_occupancy_copy = drone_occupancy.copy()
         num_control_points = random.randint(min_number_control_points,max_number_control_points)
         for i in range(num_control_points):
-            next_valid_points = get_all_valid_next_points(grid,current_point,valid_points,drone_occupancy_copy,depth)
+            next_valid_points, point_depths = get_all_valid_next_points(grid,current_point,valid_points,drone_occupancy_copy,depth)
             if(i == num_control_points - 1):
-                valid_previous_points = get_all_valid_previous_points(grid,target_point,valid_points,drone_occupancy,depth)
-                new_valid_next_points = []
-                for point in valid_previous_points:
-                    if point in next_valid_points:
-                        new_valid_next_points.append(point)
-                next_valid_points = new_valid_next_points
+                previous_valid_points = get_all_valid_previous_points(grid,target_point,next_valid_points,drone_occupancy,point_depths)
+                next_valid_points = previous_valid_points
             point = random.choice(next_valid_points)
             valid_points.remove(point)
             current_point = point
             path.append(point)
         path.append(target_point)
-        print("Ouput path: ", path)
         depth = 0
         i = 0
         for i in range(len(path) - 1):

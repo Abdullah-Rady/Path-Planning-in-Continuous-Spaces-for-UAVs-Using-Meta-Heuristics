@@ -3,9 +3,10 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
+import json
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution,new_check_feasibility,tweak_path
+from objective_function import calculate_total_fitness, generate_initial_solution,tweak_path
 
 # Simulated Annealing Parameters
 
@@ -21,7 +22,19 @@ beta = (final_temperature - initial_temperature) / max_iterations  # Linear Cool
 grid = None
 drone_occupancy = None
 
-import json
+def get_paths(data, drone_number):
+    drone_paths = {}
+    drone_paths = []
+    for j in range(len(data)):
+        for k in range(len(data[j])):
+            for l in range(len(data[j][k])):
+                drones_in_cell = data[j][k][l]
+                for drone_tag,time_stamp in drones_in_cell:
+                    if drone_tag == drone_number:
+                        drone_paths.append((j,k,l,time_stamp))
+    #sort drone_paths[i] by time_stamp
+    drone_paths.sort(key=lambda tup: tup[3])
+    return drone_paths
 
 
 
@@ -66,25 +79,17 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
 
             if len(path) <= 2:
                 continue
-            test_tweak = tweak_path(current_solution,r1,drone_occupancy,current_solution[r1][0],current_solution[r1][-1],grid)
-            if len(test_tweak) == 0:
+            new_path,new_drone_occupancy = tweak_path(current_solution,r1,drone_occupancy,current_solution[r1][0],current_solution[r1][-1],grid)
+            if len(new_path) == 0:
                 continue
-            new_path,new_drone_occupancy = test_tweak
             drone_occupancy = new_drone_occupancy
             new_solution = current_solution[:]
             new_solution[r1] = new_path
-            # print("New Solution Before Feasibility Check: ", new_solution)
-
-            # new_solution = new_check_feasibility(new_solution,grid)
-
+            time_paths = get_paths(drone_occupancy,r1+1)
             print("New Solution After Feasibility Check: ", new_solution)
-
-            # Calculate the change in energy (objective value)
+            # print("Paths os solution: ", time_paths)
             new_fitness_value = calculate_total_fitness(new_solution)
             print("Current fitness value:" , new_fitness_value)
-            # with open('drone_occupancy.json', 'w') as fp:
-            #     json.dump(drone_occupancy, fp)
-            # return
             delta_E = new_fitness_value - fitness_value
             if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
@@ -189,7 +194,7 @@ with open('best_solution.json','w') as fp:
 
 with open('best_solution_value.json','w') as fp:
     json.dump(calculate_total_fitness(best_solution), fp)
-# plot_graph(afv, mfv, temperatures)  # Plot the graph
+plot_graph(afv, mfv, temperatures)  # Plot the graph
 
 def visualize_problem(ps_list, pt_list, obstacle_list, solution_paths):
 
@@ -241,13 +246,44 @@ def visualize_problem(ps_list, pt_list, obstacle_list, solution_paths):
     # Show the plot
     plt.show()
 
-# paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
-
-# print(paths)
-# # #save drone_occupancy to json file
 
 
-# print("Initial Solution: ", paths)
+            
+def check_overlap(obj):
+    """
+    Check if there are any overlapping timestamps for drones in the same coordinates.
+
+    Args:
+        obj (dict): Dictionary where keys are drone tags and values are lists of tuples (x, y, z, timestamp).
+
+    Returns:
+        bool: True if there are no overlaps, False otherwise.
+    """
+    coordinates_timestamps = {}  # Dictionary to store coordinates and their timestamps
+
+    for drone_tag, positions in obj.items():
+        for x, y, z, timestamp in positions:
+            # Check if the coordinates are already in the dictionary
+            if (x, y, z) in coordinates_timestamps:
+                # Check if the timestamp overlaps with existing timestamps for the same coordinates
+                if timestamp in coordinates_timestamps[(x, y, z)]:
+                    return True  # Overlapping timestamps found
+                else:
+                    coordinates_timestamps[(x, y, z)].append(timestamp)
+            else:
+                # If coordinates are not in the dictionary, add them with the current timestamp
+                coordinates_timestamps[(x, y, z)] = [timestamp]
+
+    return False  # No overlapping timestamps found
+
+# for _ in range(10000):
+#     paths, grid, drone_occupancy = generate_initial_solution(size_of_grid1, ps_list1, pt_list1, obstacle_list1)  # Initial solution is the simplified path
+#     time_paths = get_paths(drone_occupancy)
+#     if(check_overlap(time_paths)):
+#         print("Overlap Found")
+#         print(paths)
+#         break
+
 
 
 

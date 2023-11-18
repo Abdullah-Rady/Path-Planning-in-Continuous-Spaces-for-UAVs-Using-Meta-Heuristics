@@ -6,14 +6,14 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 
-from objective_function import calculate_total_fitness, generate_initial_solution,check_feasibility, build_grid, tweak_path, tweak_path_crossover
+from objective_function import calculate_total_fitness, generate_initial_solution, build_grid, tweak_path, tweak_path_crossover
 
 #Genetic Algorithm Parameters
 num_generations = 100
 population_size  = 10
 p_elite = 0.2
-p_cross = 0.6
-p_mutation = 0.2
+p_cross = 0.4
+p_mutation = 0.4
 # alpha = 0.7
 
 
@@ -23,35 +23,12 @@ num_elite = int(p_elite * population_size)
 
 
 
-# def crossover_one_point(parent1, parent2, crossover_point):
-#     child1 = np.concatenate((parent1[:crossover_point], parent2[crossover_point:]))
-#     child2 = np.concatenate((parent2[:crossover_point], parent1[crossover_point:]))
-    
-#     return child1, child2
-
-
-# def crossover_multi_point(parent1, parent2, crossover_point1, crossover_point2):
-#     child1 = np.concatenate((parent1[:crossover_point1], parent2[crossover_point1:crossover_point2], parent1[crossover_point2:]))
-#     child2 = np.concatenate((parent2[:crossover_point1], parent1[crossover_point1:crossover_point2], parent2[crossover_point2:]))
-
-#     return child1, child2
-
-
-# def crossover_uniform(parent1, parent2, crossover_prob):
-#     mask = np.random.rand(len(parent1)) < crossover_prob
-#     child1 = np.where(mask, parent1, parent2)
-#     child2 = np.where(mask, parent2, parent1)
-
-#     return child1, child2
-
-
 def crossover(parent1, parent2, grid, drone_occ_1, drone_occ_2):
     remaining = [i for i in range(len(parent1) - 1)]
     child1 = None
     child2 = None
     while len(remaining) > 0:
-        x = random.choice(remaining)
-        picked_x = remaining[x]
+        picked_x = random.choice(remaining)
         remaining.remove(picked_x)
         child1,child2,drone_occ_new_1,drone_occ_new_2 = tweak_path_crossover(parent1, parent2, picked_x, drone_occ_1, drone_occ_2, grid)
         if(len(child1)!= 0 and len(child2)!=0):
@@ -65,24 +42,21 @@ def crossover(parent1, parent2, grid, drone_occ_1, drone_occ_2):
     
 
 
-
-
 def mutate(gene, drone_occupancy, grid):
     random_r1 = random.randint(0, len(gene) - 1)
-    test_tweak = tweak_path(gene, random_r1, drone_occupancy, gene[random_r1][0], gene[random_r1][-1], grid)
-    if len(test_tweak) == 0:
-        return gene, drone_occupancy
-    else:
-        return test_tweak
+    new_path, new_drone_occupancy = tweak_path(gene, random_r1, drone_occupancy, gene[random_r1][0], gene[random_r1][-1], grid)
+    if(len(new_path) != 0):
+        gene[random_r1] = new_path
+    return gene, new_drone_occupancy
 
 
 def select_elite(population, fitness):
-    elite_indices = np.argsort(fitness)[num_elite:]
+    elite_indices = list(np.argsort(fitness)[:num_elite])
 
-    return [population[i] for i in elite_indices]
+    return [population[i] for i in elite_indices], elite_indices
 
 def select_worst(population, fitness):
-    worst_indices = np.argsort(fitness)[-1 * num_crossover:]
+    worst_indices = list(np.argsort(fitness)[-1 * num_mutation:])
 
     return [population[index] for index in worst_indices],worst_indices
 
@@ -91,9 +65,9 @@ def select_worst(population, fitness):
 
 def fitness_proportionate_selection(population, fitness_scores, num_selected):
     # Calculate total fitness
-    total_fitness = sum(fitness_scores)
+    total_inverse_fitness = sum(1 / score for score in fitness_scores)    
     # Calculate selection probabilities
-    selection_probabilities = [score / total_fitness for score in fitness_scores]
+    selection_probabilities = [ (1/score) / total_inverse_fitness for score in fitness_scores]
     # Select individuals based on probabilities
     selected_indices = []
     for _ in range(num_selected):
@@ -123,36 +97,54 @@ def generate_population(size_of_grid, starting_points, target_points, obstacles)
 
 def genetic(size_of_grid, starting_points, target_points, obstacles):
     population, drone_occupancies, grid = generate_population(size_of_grid, starting_points, target_points, obstacles)
+    print("Length of drone occupancies: ", len(drone_occupancies))
+
     for iteration in range(num_generations):
         fitness = []
+        new_population = []
+        new_drone_occupancies = []
+        print("Population size: ", len(population))
         for gene in population:
             fitness.append(calculate_total_fitness(gene))
+        print("All fitnesses: ", fitness)
+        best_index = np.argmin(fitness)
+        best_solution = population[best_index]
+        best_fitness = fitness[best_index]
+        print(f"Iteration {iteration}: Best Fitness = {best_fitness}")
         new_population = []
-        elites = select_elite(population, fitness)
-        for elite in elites:
+        elites, elite_indices = select_elite(population, fitness)
+        for i,elite in enumerate(elites):
             new_population.append(elite)
+            new_drone_occupancies.append(drone_occupancies[elite_indices[i]])
         
         parents, indices = fitness_proportionate_selection(population, fitness, num_crossover)
-
+        print("Parents: ", parents)
         for i in range(0, len(parents), 2):
+            print("do i enter")
             # Select parents
             parent1 = parents[i]
             parent2 = parents[i + 1]
             # Perform crossover
-            print(drone_occupancies[indices[i]])
-            children = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]])
-            new_population.append(child for child in children)
+            child1, child2, drone_occupancy_1,drone_occupancy_2 = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]])
+            new_drone_occupancies.append(drone_occupancy_1)
+            new_drone_occupancies.append(drone_occupancy_2)
+            new_population.append(child1)
+            new_population.append(child2)
         # Perform mutation
-        worst_genes, worst_gene_indices = select_worst(population, fitness)
-        for i,gene in enumerate(worst_genes):
-            new_population.append(mutate(gene,drone_occupancies[worst_gene_indices[i]],grid))
-    
-        # Output best solution and fitness
-        best_index = np.argmax(fitness)
-        best_solution = population[best_index]
-        best_fitness = fitness[best_index]
-        print(f"Iteration {iteration + 1}: Best Fitness = {best_fitness}")
 
+        worst_genes, worst_gene_indices = select_worst(population, fitness)
+        print("Worst gene indices: ", worst_gene_indices)
+        print("Worst genes indices size: ", len(worst_gene_indices))
+        for i , gene in enumerate(worst_genes):
+            print("Index: ", i)
+            gene_index = worst_gene_indices[i]
+            new_gene, new_drone_occupancy = mutate(gene,drone_occupancies[gene_index],grid)
+            if(len(new_gene) != 0):
+                new_drone_occupancies.append(new_drone_occupancy)
+                new_population.append(new_gene)
+        population = new_population
+        drone_occupancies = new_drone_occupancies
+        
     return best_solution, best_fitness,population
 
 size_of_grid1 = 30  # Size of the grid
@@ -168,3 +160,5 @@ obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
 
 best_solution, best_fitness,population = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
+
+print("Best solution: ", best_solution)
