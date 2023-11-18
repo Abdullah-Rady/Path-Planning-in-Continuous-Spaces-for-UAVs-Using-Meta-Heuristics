@@ -188,7 +188,7 @@ best_solution, best_fitness, population, initial_solution, fitness_values = gene
 end_time = time.time()
 
 
-# print("Best solution: ", best_solution)
+print("Best solution: ", best_solution)
 # print("Best solution: ", best_fitness)
 # print("Best solution: ", population)
 
