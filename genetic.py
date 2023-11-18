@@ -183,12 +183,12 @@ obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 
 
 
 
-start_time = time.time()
-best_solution, best_fitness, population, initial_solution, fitness_values = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
-end_time = time.time()
+# start_time = time.time()
+# best_solution, best_fitness, population, initial_solution, fitness_values = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
+# end_time = time.time()
 
 
-print("Best solution: ", best_solution)
+# print("Best solution: ", best_solution)
 # print("Best solution: ", best_fitness)
 # print("Best solution: ", population)
 
@@ -197,4 +197,4 @@ print("Best solution: ", best_solution)
 
 # plot_fitness_over_iterations(fitness_values)
 
-visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, best_solution)
+visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, solution_paths=[[(5, 5, 5), (6, 6, 14), (25, 25, 25)], [(1, 10, 10), (1, 10, 11), (1, 15, 20)], [(20, 20, 20), (18, 12, 13), (18, 12, 12)]])
