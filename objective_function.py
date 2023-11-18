@@ -312,8 +312,9 @@ def remove_from_occurence(path,drone_occupancy,drone_tag):
         return drone_occupancy
 
 
-def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid):
-    print("Crossing over after drone: ", index_to_be_tweaked_after + 1)
+def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid, visualize = False):
+    if visualize:
+        print("Crossing over after drone: ", index_to_be_tweaked_after + 1)
     new_paths_1 = []
     new_paths_2 = []
     drone_occupancy_copy1 = drone_occupancy1.copy()
@@ -330,7 +331,8 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, dr
         new_path_1 , drone_occupancy_copy1 = tweak_path_cross(drone_paths1,index_path_to_be_tweaked, drone_paths2[index_path_to_be_tweaked],drone_occupancy_copy1,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
         new_path_2 , drone_occupancy_copy2 = tweak_path_cross(drone_paths2,index_path_to_be_tweaked, drone_paths1[index_path_to_be_tweaked],drone_occupancy_copy2,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
         if(len(new_path_1) == 0 or len(new_path_2) == 0):
-            print("Crossover failed")
+            if visualize:
+                print("Crossover failed")
             return [],[],[],[]
         new_paths_1.append(new_path_1)
         new_paths_2.append(new_path_2)
@@ -339,8 +341,9 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, dr
 
 
 
-def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid):
-    print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid, visualize = False):
+    if visualize:
+        print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
     new_path = []
@@ -357,13 +360,15 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
         if(old_path[i+1] in valid_next_points):
             valid_next_points.remove(old_path[i+1])
         if(len(valid_next_points) == 0):
-            print("Path cannot be tweaked")
+            if visualize:
+                print("Path cannot be tweaked")
             return [],[]
         new_point = get_closest_valid_point(path_to_be_inserted[i+1],valid_next_points)
         valid_points.remove(new_point)
         new_path.append(new_point)
     new_path.append(target_point)
-    print("Checking validity of new path: " , new_path)
+    if visualize:
+        print("Checking validity of new path: " , new_path)
     # new_path = douglas_peucker(new_path)
     for i in range(len(new_path)-1):
         first_point = new_path[i]
@@ -377,7 +382,8 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
                 drone_occupancy_copy[x][y][z].append((index_path_to_be_tweaked + 1, depth))
                 depth += 1
             else:
-                print("Could not crossover")
+                if visualize:
+                    print("Could not crossover")
                 return []
     return new_path,drone_occupancy_copy
     
@@ -390,8 +396,9 @@ def contains_tag(drone_occupancy,drone_tag):
                         return True
     return False
 
-def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid):
-    print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid, visualize = False):
+    if visualize:
+        print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
     drone_occupancy_copy = remove_from_occurence(old_path,drone_occupancy_copy,index_path_to_be_tweaked+1)
@@ -408,14 +415,16 @@ def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_po
         if(old_path[i+1] in valid_next_points):
             valid_next_points.remove(old_path[i+1])
         if(len(valid_next_points) == 0):
-            print("Path cannot be tweaked")
+            if visualize:
+                print("Path cannot be tweaked")
             return [],[]
         new_point = get_closest_valid_point(old_path[i+1],valid_next_points)
         valid_points.remove(new_point)
         new_path.append(new_point)
     new_path.append(target_point)
     # new_path = douglas_peucker(new_path)
-    print("Checking validity of new path: " , new_path)
+    if visualize:
+        print("Checking validity of new path: " , new_path)
     for i in range(len(new_path)-1):
         first_point = new_path[i]
         second_point = new_path[i+1]
