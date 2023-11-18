@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from objective_function import calculate_total_fitness, generate_initial_solution, build_grid, tweak_path, tweak_path_crossover
-from visualize import calculate_stats, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution
+from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution
 
 #Genetic Algorithm Parameters
 num_generations = 100
@@ -103,6 +103,7 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
     if visualize:
         print("Length of drone occupancies: ", len(drone_occupancies))
 
+    all_fitness = []
     for iteration in range(num_generations):
         fitness = []
         new_population = []
@@ -112,6 +113,7 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
             print("Population size: ", len(population))
         for gene in population:
             fitness.append(calculate_total_fitness(gene))
+            all_fitness.append(fitness[-1])
         if visualize:
             print("All fitnesses: ", fitness)
         
@@ -167,7 +169,7 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
         population = new_population
         drone_occupancies = new_drone_occupancies
         
-    return best_solution, best_fitness, population, initial_solution, fitness
+    return best_solution, best_fitness, population, initial_solution, all_fitness
 
 size_of_grid1 = 30  # Size of the grid
 
@@ -183,9 +185,21 @@ obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 
 
 
 
-# start_time = time.time()
-# best_solution, best_fitness, population, initial_solution, fitness_values = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
-# end_time = time.time()
+start_time = time.time()
+best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
+end_time = time.time()
+
+print(calculate_stats(all_fitness, start_time,end_time))
+# array_50_integers = np.random.randint(0, 101, size=50)
+plot_fitness_over_iterations(all_fitness)
+plot_best_fitness_over_iterations(all_fitness)
+
+# population, drone_occupancies, grid = generate_population(size_of_grid, starting_points, target_points, obstacles)
+
+# initial_solution = population[0]
+
+
+# stats_dict = calculate_stats(fitness_values, end_time)
 
 
 # print("Best solution: ", best_solution)
@@ -197,4 +211,4 @@ obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 
 
 # plot_fitness_over_iterations(fitness_values)
 
-visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, solution_paths=[[(5, 5, 5), (6, 6, 14), (25, 25, 25)], [(1, 10, 10), (1, 10, 11), (1, 15, 20)], [(20, 20, 20), (18, 12, 13), (18, 12, 12)]])
+# visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, solution_paths=[[(5, 5, 5), (6, 6, 14), (25, 25, 25)], [(1, 10, 10), (1, 10, 11), (1, 15, 20)], [(20, 20, 20), (18, 12, 13), (18, 12, 12)]])

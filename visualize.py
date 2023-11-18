@@ -3,7 +3,6 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import json
-import pythreejs as p3j
 import time
 import vtk
 
@@ -45,8 +44,6 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
     orientation_widget.SetInteractor(interactor)
     orientation_widget.SetViewport(0.8, 0, 1.0, 0.2) 
 
-    # Add the grid actor to the renderer
-    renderer.AddActor(grid_actor)
 
 
     # Create point data for start points (ps_list)
@@ -157,7 +154,8 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
 
     # Add actors to the renderer
     renderer.AddActor(start_actor)
-    # Add other actors for target points, obstacles, paths...
+    renderer.AddActor(grid_actor)
+
 
     # Set camera position and orientation
     renderer.GetActiveCamera().SetPosition(10, 10, 10)
@@ -170,7 +168,6 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
     render_window.Render()
     render_window_interactor.Start()
     interactor.Start()
-
 
 
 # def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
@@ -289,9 +286,8 @@ def plot_fitness_over_iterations( fitness_values):
     - fitness_values: List of corresponding best fitness values.
     """
     window_size = 10
-    mean_per_population = calculate_stats_per_window(fitness_values, window_size)
-
-    plt.plot(np.range(1, len(fitness_values) // window_size), mean_per_population, marker='o', linestyle='-')
+    mean_per_population, std_per_population = calculate_stats_per_window(fitness_values, window_size)
+    plt.plot(np.arange(1, len(fitness_values) // window_size + 1), mean_per_population, marker='o', linestyle='-')
     plt.xlabel('Generation')
     plt.ylabel('Mean Fitness')
     plt.title('Genetic Algorithm: Mean Fitness over Generations')
@@ -308,9 +304,7 @@ def plot_best_fitness_over_iterations(fitness_values):
     """
     window_size = 10
     min_per_population, prefix_min = calculate_min_stats_per_window(fitness_values, window_size)
-
-    generations = np.arange(1, len(fitness_values) // window_size, window_size)
-
+    generations = np.arange(1, len(fitness_values) // window_size + 1)
     fig, axs = plt.subplots(2, figsize=(8, 8))
 
     axs[0].plot(generations, min_per_population, marker='o', linestyle='-')
@@ -367,8 +361,10 @@ def calculate_min_stats_per_window(fitness_values, window_size):
 
 
 def calculate_stats(fitness_values, start_time, end_time):
-    fitness_mean = np.mean(fitness_values)
-    fitness_std = np.std(fitness_values)
+    mean_per_population, std_per_population = calculate_stats_per_window(fitness_values, 10)
+
+    fitness_mean = np.mean(mean_per_population)
+    fitness_std = np.std(std_per_population)
     runtime = end_time - start_time
     return {
         "mean_fitness": fitness_mean,
