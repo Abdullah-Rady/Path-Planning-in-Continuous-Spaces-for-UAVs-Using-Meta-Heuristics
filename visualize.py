@@ -6,25 +6,29 @@ import json
 import time
 
 
-
 def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
-
     # Function to plot points
     def plot_points(points, ax, color, marker):
         for point in points:
             ax.scatter(*point, c=color, marker=marker, s=100)
+
+    # Function to plot lines between start and end points
+    def plot_lines(start_points, end_points, ax):
+        for start, end in zip(start_points, end_points):
+            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], c='black', linewidth=1)
 
     # Function to plot obstacles
     def plot_obstacles(obstacles, ax):
         for obstacle in obstacles:
             starting_point = obstacle[0]
             ending_point = obstacle[1]
-            obstacle_points =[]
-            for x_value in range(starting_point[0],ending_point[0]+1):
-                for y_value in range(starting_point[1],ending_point[1]+1):
-                    for z_value in range(starting_point[2],ending_point[2]+1):
-                        obstacle_points.append((x_value,y_value,z_value))
+            obstacle_points = []
+            for x_value in range(starting_point[0], ending_point[0] + 1):
+                for y_value in range(starting_point[1], ending_point[1] + 1):
+                    for z_value in range(starting_point[2], ending_point[2] + 1):
+                        obstacle_points.append((x_value, y_value, z_value))
             plot_points(obstacle_points, ax, 'red', 's')
+
     # Create a 3D plot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -34,10 +38,13 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
 
     colors = ['green', 'blue', 'red']
 
-    if(solution_paths != None):
+    if solution_paths is not None:
         for i, path in enumerate(solution_paths):
             for point in path:
                 ax.plot(*point, c=colors[i], marker='_', linewidth=1)
+
+    # Plot lines connecting start and end points
+    plot_lines(ps_list, pt_list, ax)
 
     plot_points(ps_list, ax, 'blue', 'x')  # Plot start points
     # Plot target points
@@ -56,6 +63,55 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
 
     # Show the plot
     plt.show()
+# def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
+
+#     # Function to plot points
+#     def plot_points(points, ax, color, marker):
+#         for point in points:
+#             ax.scatter(*point, c=color, marker=marker, s=100)
+
+#     # Function to plot obstacles
+#     def plot_obstacles(obstacles, ax):
+#         for obstacle in obstacles:
+#             starting_point = obstacle[0]
+#             ending_point = obstacle[1]
+#             obstacle_points =[]
+#             for x_value in range(starting_point[0],ending_point[0]+1):
+#                 for y_value in range(starting_point[1],ending_point[1]+1):
+#                     for z_value in range(starting_point[2],ending_point[2]+1):
+#                         obstacle_points.append((x_value,y_value,z_value))
+#             plot_points(obstacle_points, ax, 'red', 's')
+#     # Create a 3D plot
+#     fig = plt.figure()
+#     ax = fig.add_subplot(111, projection='3d')
+
+#     # Plot the grid
+#     # plot_grid(size_of_grid1, ax)
+
+#     colors = ['green', 'blue', 'red']
+
+#     if(solution_paths != None):
+#         for i, path in enumerate(solution_paths):
+#             for point in path:
+#                 ax.plot(*point, c=colors[i], marker='_', linewidth=1)
+
+#     plot_points(ps_list, ax, 'blue', 'x')  # Plot start points
+#     # Plot target points
+#     plot_points(pt_list, ax, 'green', 'o')
+
+#     # Plot obstacles
+#     plot_obstacles(obstacle_list, ax)
+
+#     # Set labels
+#     ax.set_xlabel('X-axis')
+#     ax.set_ylabel('Y-axis')
+#     ax.set_zlabel('Z-axis')
+
+#     # Set title
+#     plt.title('3D Grid with Target Points and Obstacles')
+
+#     # Show the plot
+#     plt.show()
 
 def plot_fitness_over_iterations( fitness_values):
     """
