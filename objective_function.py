@@ -301,7 +301,7 @@ def remove_from_occurence(path,drone_occupancy,drone_tag):
         #         drones_in_cell = drone_occupancy[x][y][z].copy()
         #         for j in range(len(drones_in_cell)):
         #             if drones_in_cell[j][0] == drone_tag:
-        #                 drone_occupancy[x][y][z].remove(drones_in_cell[j])
+                        # drone_occupancy[x][y][z].remove(drones_in_cell[j])
         for i in range(len(drone_occupancy)):
             for j in range(len(drone_occupancy)):
                 for k in range(len(drone_occupancy)):
@@ -312,30 +312,31 @@ def remove_from_occurence(path,drone_occupancy,drone_tag):
         return drone_occupancy
 
 
-def tweak_path_crossover(drone_paths1,drone_paths2,index_to_be_tweaked_after, drone_occupancy1,drone_occupancy2,grid, visualize = False):
+def tweak_path_crossover(drone_paths1,drone_paths2,index_path_to_be_tweaked, drone_occupancy1,drone_occupancy2,grid, visualize = False):
     if visualize:
-        print("Crossing over after drone: ", index_to_be_tweaked_after + 1)
+        print("Crossing over after drone: ", index_path_to_be_tweaked + 1)
     new_paths_1 = []
     new_paths_2 = []
     drone_occupancy_copy1 = drone_occupancy1.copy()
     drone_occupancy_copy2 = drone_occupancy2.copy()
-    for index_path_to_be_kept in range(index_to_be_tweaked_after+1):
+    for index_path_to_be_kept in range(index_path_to_be_tweaked):
         new_paths_1.append(drone_paths1[index_path_to_be_kept])
         new_paths_2.append(drone_paths2[index_path_to_be_kept])
-    for index_path_to_be_tweaked in range(index_to_be_tweaked_after+1,len(drone_paths1)):
-        old_path1 = drone_paths1[index_path_to_be_tweaked]
-        old_path2 = drone_paths2[index_path_to_be_tweaked]
-        drone_occupancy_copy1 = remove_from_occurence(old_path1,drone_occupancy_copy1,index_path_to_be_tweaked+1)
-        drone_occupancy_copy2 = remove_from_occurence(old_path2,drone_occupancy_copy2,index_path_to_be_tweaked+1)
-    for index_path_to_be_tweaked in range(index_to_be_tweaked_after+1,len(drone_paths1)):
-        new_path_1 , drone_occupancy_copy1 = tweak_path_cross(drone_paths1,index_path_to_be_tweaked, drone_paths2[index_path_to_be_tweaked],drone_occupancy_copy1,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
-        new_path_2 , drone_occupancy_copy2 = tweak_path_cross(drone_paths2,index_path_to_be_tweaked, drone_paths1[index_path_to_be_tweaked],drone_occupancy_copy2,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid)
-        if(len(new_path_1) == 0 or len(new_path_2) == 0):
-            if visualize:
-                print("Crossover failed")
-            return [],[],[],[]
-        new_paths_1.append(new_path_1)
-        new_paths_2.append(new_path_2)
+    for index_path_to_be_kept in range(index_path_to_be_tweaked+1,len(drone_paths1)):
+        new_paths_1.append(drone_paths2[index_path_to_be_kept])
+        new_paths_2.append(drone_paths1[index_path_to_be_kept])
+    old_path1 = drone_paths1[index_path_to_be_tweaked]
+    old_path2 = drone_paths2[index_path_to_be_tweaked]
+    drone_occupancy_copy1 = remove_from_occurence(old_path1,drone_occupancy_copy1,index_path_to_be_tweaked+1)
+    drone_occupancy_copy2 = remove_from_occurence(old_path2,drone_occupancy_copy2,index_path_to_be_tweaked+1)
+    new_path_1 , drone_occupancy_copy1 = tweak_path_cross(drone_paths1,index_path_to_be_tweaked, drone_paths2[index_path_to_be_tweaked],drone_occupancy_copy1,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid, visualize=visualize)
+    new_path_2 , drone_occupancy_copy2 = tweak_path_cross(drone_paths2,index_path_to_be_tweaked, drone_paths1[index_path_to_be_tweaked],drone_occupancy_copy2,drone_paths2[index_path_to_be_tweaked][0],drone_paths2[index_path_to_be_tweaked][-1],grid, visualize=visualize)
+    if(len(new_path_1) == 0 or len(new_path_2) == 0):
+        if visualize:
+            print("Crossover failed")
+        return [],[],[],[]
+    new_paths_1.append(new_path_1)
+    new_paths_2.append(new_path_2)
     return new_paths_1,new_paths_2,drone_occupancy_copy1,drone_occupancy_copy2
 
 
@@ -353,9 +354,9 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
     path_length = min(len(old_path), len(path_to_be_inserted))
     end = path_length-2
     for i in range(end):
-        valid_next_points,point_depths = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy,depth)
+        valid_next_points,point_depths = get_all_valid_next_points(grid,new_path[i],valid_points,drone_occupancy_copy,depth)
         if(i == end - 1):
-            previous_valid_points = get_all_valid_previous_points(grid,target_point,valid_next_points,drone_occupancy,point_depths)
+            previous_valid_points = get_all_valid_previous_points(grid,target_point,valid_next_points,drone_occupancy_copy,point_depths)
             valid_next_points = previous_valid_points
         if(old_path[i+1] in valid_next_points):
             valid_next_points.remove(old_path[i+1])
@@ -674,7 +675,14 @@ def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial
             if(grid[inner_point[0]][inner_point[1]][inner_point[2]]==1):
                 rejected_Flag = True
                 break
-            drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
+
+            try:
+                drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
+            except:
+                print(inner_point)
+                print(drone_occupancy)
+                print(len(drone_occupancy))
+                print(drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]])
             for _, depth in drones_in_cell:
                 if(current_depth == depth):
                     rejected_Flag = True

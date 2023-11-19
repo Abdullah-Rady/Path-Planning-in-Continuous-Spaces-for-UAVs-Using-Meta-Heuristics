@@ -12,8 +12,8 @@ from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_f
 num_generations = 100
 population_size  = 10
 p_elite = 0.2
-p_cross = 0.4
-p_mutation = 0.4
+p_cross = 0.2
+p_mutation = 0.6
 # alpha = 0.7
 
 
@@ -45,9 +45,11 @@ def crossover(parent1, parent2, grid, drone_occ_1, drone_occ_2, visualize=False)
 
 def mutate(gene, drone_occupancy, grid):
     random_r1 = random.randint(0, len(gene) - 1)
-    new_path, new_drone_occupancy = tweak_path(gene, random_r1, drone_occupancy, gene[random_r1][0], gene[random_r1][-1], grid)
+    new_path, new_drone_occupancy = tweak_path(gene, random_r1, drone_occupancy, gene[random_r1][0], gene[random_r1][-1], grid, visualize=False)
     if(len(new_path) != 0):
         gene[random_r1] = new_path
+    else:
+        new_drone_occupancy = drone_occupancy
     return gene, new_drone_occupancy
 
 
@@ -111,6 +113,7 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
         new_population = []
         new_drone_occupancies = []
 
+
         if visualize:
             print("Population size: ", len(population))
         for gene in population:
@@ -146,7 +149,16 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
             parent1 = parents[i]
             parent2 = parents[i + 1]
             # Perform crossover
+
             child1, child2, drone_occupancy_1,drone_occupancy_2 = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]], visualize=visualize)
+            if(len(child1) == 0 or len(child2) == 0 or len(drone_occupancy_1) == 0 or len(drone_occupancy_2) == 0):
+                new_drone_occupancies.append(drone_occupancies[indices[i]])
+                new_drone_occupancies.append(drone_occupancies[indices[i + 1]])
+                new_population.append(parent1)
+                new_population.append(parent2)
+                continue
+            print("Appending drone occupancy from crossover: ", len(drone_occupancy_1))
+            print("Appending drone occupancy from crossover: ", len(drone_occupancy_2))
             new_drone_occupancies.append(drone_occupancy_1)
             new_drone_occupancies.append(drone_occupancy_2)
             new_population.append(child1)
@@ -168,6 +180,9 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
             if(len(new_gene) != 0):
                 new_drone_occupancies.append(new_drone_occupancy)
                 new_population.append(new_gene)
+            else:
+                new_drone_occupancies.append(drone_occupancies[gene_index])
+                new_population.append(gene)
         population = new_population
         drone_occupancies = new_drone_occupancies
         
