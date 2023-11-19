@@ -384,7 +384,7 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
             else:
                 if visualize:
                     print("Could not crossover")
-                return []
+                return [],[]
     return new_path,drone_occupancy_copy
     
 def contains_tag(drone_occupancy,drone_tag):

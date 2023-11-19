@@ -17,20 +17,21 @@ p_mutation = 0.4
 # alpha = 0.7
 
 
+
 num_crossover = int(p_cross * population_size)
 num_mutation = int(p_mutation * population_size)
 num_elite = int(p_elite * population_size)
 
 
 
-def crossover(parent1, parent2, grid, drone_occ_1, drone_occ_2):
+def crossover(parent1, parent2, grid, drone_occ_1, drone_occ_2, visualize=False):
     remaining = [i for i in range(len(parent1) - 1)]
     child1 = None
     child2 = None
     while len(remaining) > 0:
         picked_x = random.choice(remaining)
         remaining.remove(picked_x)
-        child1,child2,drone_occ_new_1,drone_occ_new_2 = tweak_path_crossover(parent1, parent2, picked_x, drone_occ_1, drone_occ_2, grid)
+        child1,child2,drone_occ_new_1,drone_occ_new_2 = tweak_path_crossover(parent1, parent2, picked_x, drone_occ_1, drone_occ_2, grid, visualize)
         if(len(child1)!= 0 and len(child2)!=0):
             return child1,child2,drone_occ_new_1,drone_occ_new_2
     else:
@@ -139,13 +140,13 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
         for i in range(0, len(parents), 2):
 
             if visualize:
-                print("do i enter")
+                print("Crossing over")
             
             # Select parents
             parent1 = parents[i]
             parent2 = parents[i + 1]
             # Perform crossover
-            child1, child2, drone_occupancy_1,drone_occupancy_2 = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]])
+            child1, child2, drone_occupancy_1,drone_occupancy_2 = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]], visualize=visualize)
             new_drone_occupancies.append(drone_occupancy_1)
             new_drone_occupancies.append(drone_occupancy_2)
             new_population.append(child1)
@@ -217,7 +218,7 @@ obstacle_list2 = [
 
 
 start_time = time.time()
-best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid2, ps_list2, pt_list2, obstacle_list2)
+best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid2, ps_list2, pt_list2, obstacle_list2, visualize=False)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
