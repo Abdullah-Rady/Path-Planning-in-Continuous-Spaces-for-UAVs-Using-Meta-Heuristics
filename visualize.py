@@ -6,7 +6,7 @@ import json
 import time
 import vtk
 
-def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
+def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths=None):
     # Create a VTK renderer
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(1, 1, 1)  # Set background color (white)
@@ -119,36 +119,39 @@ def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths):
     obstacle_actor.GetProperty().SetPointSize(10)  # Set point size
 
     # Create a polydata for solution paths (assuming solution_paths is a list of paths)
-    solution_paths_polydata = vtk.vtkPolyData()
-    points = vtk.vtkPoints()
+    if solution_paths != None:
+        solution_paths_polydata = vtk.vtkPolyData()
+        points = vtk.vtkPoints()
 
-    lines = vtk.vtkCellArray()  # Create lines to represent paths
+        lines = vtk.vtkCellArray()  # Create lines to represent paths
 
-    for path in solution_paths:
-        line = vtk.vtkPolyLine()
-        for point in path:
-            points.InsertNextPoint(point)
-            line.GetPointIds().InsertNextId(points.GetNumberOfPoints() - 1)  # Insert point IDs for the line
+        for path in solution_paths:
+            line = vtk.vtkPolyLine()
+            for point in path:
+                points.InsertNextPoint(point)
+                line.GetPointIds().InsertNextId(points.GetNumberOfPoints() - 1)  # Insert point IDs for the line
 
-        lines.InsertNextCell(line)
+            lines.InsertNextCell(line)
 
-    solution_paths_polydata.SetPoints(points)
-    solution_paths_polydata.SetLines(lines)
+        solution_paths_polydata.SetPoints(points)
+        solution_paths_polydata.SetLines(lines)
 
-    # Create a mapper for solution paths
-    solution_paths_mapper = vtk.vtkPolyDataMapper()
-    solution_paths_mapper.SetInputData(solution_paths_polydata)
+        # Create a mapper for solution paths
+        solution_paths_mapper = vtk.vtkPolyDataMapper()
+        solution_paths_mapper.SetInputData(solution_paths_polydata)
 
-    # Create an actor for solution paths
-    solution_paths_actor = vtk.vtkActor()
-    solution_paths_actor.SetMapper(solution_paths_mapper)
-    solution_paths_actor.GetProperty().SetColor(0, 0, 0)  # Set color to black
-    solution_paths_actor.GetProperty().SetLineWidth(2)  # Set line width
+        # Create an actor for solution paths
+        solution_paths_actor = vtk.vtkActor()
+        solution_paths_actor.SetMapper(solution_paths_mapper)
+        solution_paths_actor.GetProperty().SetColor(0, 0, 0)  # Set color to black
+        solution_paths_actor.GetProperty().SetLineWidth(2)  # Set line width
 
 
     # Add actors for obstacles and solution paths to the renderer
     renderer.AddActor(obstacle_actor)
-    renderer.AddActor(solution_paths_actor)
+
+    if solution_paths != None:
+        renderer.AddActor(solution_paths_actor)
     # Add actors for target points, obstacles, and paths to the renderer
     renderer.AddActor(target_actor)
 

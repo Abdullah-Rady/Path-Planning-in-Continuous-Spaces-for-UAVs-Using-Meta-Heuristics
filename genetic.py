@@ -105,6 +105,7 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
 
     all_fitness = []
     for iteration in range(num_generations):
+        print(iteration , "/" , num_generations)
         fitness = []
         new_population = []
         new_drone_occupancies = []
@@ -172,6 +173,8 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
     return best_solution, best_fitness, population, initial_solution, all_fitness
 
 size_of_grid1 = 30  # Size of the grid
+size_of_grid2 = 50  # Size of the grid
+
 
 # Define start points for the drones (x, y, z)
 ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
@@ -180,13 +183,41 @@ ps_list1 = [(5, 5, 5), (1, 10, 10), (20, 20, 20)]
 pt_list1 = [(25, 25, 25), (1, 15, 20), (18, 12, 12)]
 
 # Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
-obstacle_list = [[(2, 1, 1), (3, 2, 6)], [(2, 3, 1), (3, 6, 6)]]
 obstacle_list1 = [[(8, 8, 8), (12, 12, 12)], [(20, 15, 10), (25, 18, 20)], [(7, 15, 12), (10, 20, 18)]]
+
+ps_list2 = [
+    (5, 5, 5),
+    (1, 10, 10),
+    (20, 20, 20),
+    (30, 30, 30),
+    (8, 15, 25),
+    (12, 5, 10)
+]
+
+# Define target points for the drones (x, y, z)
+pt_list2 = [
+    (25, 25, 25),
+    (1, 15, 20),
+    (18, 12, 12),
+    (35, 30, 30),
+    (10, 20, 25),
+    (5, 20, 5)
+]
+
+# Define obstacles [(x, y, z) (x, y, z)] all grid cells from x1 to x2 and y1 to y2 and z1 to z2 are obstacles
+obstacle_list2 = [
+    [(2, 1, 1), (3, 2, 6)],
+    [(2, 3, 1), (3, 6, 6)],
+    [(8, 8, 8), (12, 12, 12)],
+    [(20, 15, 10), (25, 18, 20)],
+    [(7, 15, 12), (10, 20, 18)],
+    
+]
 
 
 
 start_time = time.time()
-best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
+best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid2, ps_list2, pt_list2, obstacle_list2)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
@@ -211,4 +242,4 @@ plot_best_fitness_over_iterations(all_fitness)
 
 # plot_fitness_over_iterations(fitness_values)
 
-# visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, solution_paths=[[(5, 5, 5), (6, 6, 14), (25, 25, 25)], [(1, 10, 10), (1, 10, 11), (1, 15, 20)], [(20, 20, 20), (18, 12, 13), (18, 12, 12)]])
+visualize_problem_solution(ps_list2, pt_list2, obstacle_list2)
