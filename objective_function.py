@@ -322,9 +322,6 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_path_to_be_tweaked, dro
     for index_path_to_be_kept in range(index_path_to_be_tweaked):
         new_paths_1.append(drone_paths1[index_path_to_be_kept])
         new_paths_2.append(drone_paths2[index_path_to_be_kept])
-    for index_path_to_be_kept in range(index_path_to_be_tweaked+1,len(drone_paths1)):
-        new_paths_1.append(drone_paths2[index_path_to_be_kept])
-        new_paths_2.append(drone_paths1[index_path_to_be_kept])
     old_path1 = drone_paths1[index_path_to_be_tweaked]
     old_path2 = drone_paths2[index_path_to_be_tweaked]
     drone_occupancy_copy1 = remove_from_occurence(old_path1,drone_occupancy_copy1,index_path_to_be_tweaked+1)
@@ -337,6 +334,9 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_path_to_be_tweaked, dro
         return [],[],[],[]
     new_paths_1.append(new_path_1)
     new_paths_2.append(new_path_2)
+    for index_path_to_be_kept in range(index_path_to_be_tweaked+1,len(drone_paths1)):
+        new_paths_1.append(drone_paths2[index_path_to_be_kept])
+        new_paths_2.append(drone_paths1[index_path_to_be_kept])
     return new_paths_1,new_paths_2,drone_occupancy_copy1,drone_occupancy_copy2
 
 
@@ -400,6 +400,7 @@ def contains_tag(drone_occupancy,drone_tag):
 def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid, visualize = False):
     if visualize:
         print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+    
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
     drone_occupancy_copy = remove_from_occurence(old_path,drone_occupancy_copy,index_path_to_be_tweaked+1)
@@ -649,20 +650,20 @@ def generate_initial_paths(starting_points, target_points, grid):
     return paths,drone_occupancy
 
 def get_valid_points(grid,starting_point,target_point):
-        min_x = min(starting_point[0], target_point[0])
-        max_x = max(starting_point[0], target_point[0])
-        min_y = min(starting_point[1], target_point[1])
-        max_y = max(starting_point[1], target_point[1])
-        min_z = min(starting_point[2], target_point[2])
-        max_z = max(starting_point[2], target_point[2])
+    min_x = min(starting_point[0], target_point[0])
+    max_x = max(starting_point[0], target_point[0])
+    min_y = min(starting_point[1], target_point[1])
+    max_y = max(starting_point[1], target_point[1])
+    min_z = min(starting_point[2], target_point[2])
+    max_z = max(starting_point[2], target_point[2])
 
-        valid_points = []
-        for x in range(min_x, max_x + 1):
-            for y in range(min_y, max_y + 1):
-                for z in range(min_z, max_z + 1):
-                    if grid[x][y][z] == 0 and (x, y, z) != starting_point and (x, y, z) != target_point:
-                        valid_points.append((x, y, z))
-        return valid_points
+    valid_points = []
+    for x in range(min_x, max_x + 1):
+        for y in range(min_y, max_y + 1):
+            for z in range(min_z, max_z + 1):
+                if grid[x][y][z] == 0 and (x, y, z) != starting_point and (x, y, z) != target_point:
+                    valid_points.append((x, y, z))
+    return valid_points
 
 def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial_depth):
     valid_points = []
@@ -675,14 +676,7 @@ def get_all_valid_next_points(grid,starting_point,points,drone_occupancy,initial
             if(grid[inner_point[0]][inner_point[1]][inner_point[2]]==1):
                 rejected_Flag = True
                 break
-
-            try:
-                drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
-            except:
-                print(inner_point)
-                print(drone_occupancy)
-                print(len(drone_occupancy))
-                print(drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]])
+            drones_in_cell = drone_occupancy[inner_point[0]][inner_point[1]][inner_point[2]]
             for _, depth in drones_in_cell:
                 if(current_depth == depth):
                     rejected_Flag = True
@@ -785,7 +779,7 @@ def generate_path(starting_point, target_point, grid,drone_tag, drone_occupancy)
         return path, drone_occupancy_copy
     else:
         # print("Path not found")
-        return [], drone_occupancy_copy
+        return [], []
 
 
     

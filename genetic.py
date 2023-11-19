@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from objective_function import calculate_total_fitness, generate_initial_solution, build_grid, tweak_path, tweak_path_crossover
-from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution
+from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
 
 #Genetic Algorithm Parameters
 num_generations = 100
@@ -102,7 +102,9 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
     population, drone_occupancies, grid = generate_population(size_of_grid, starting_points, target_points, obstacles)
 
     initial_solution = population[0]
-
+    for pop in population:
+        print("Paths: ", pop)
+        print()
     if visualize:
         print("Length of drone occupancies: ", len(drone_occupancies))
 
@@ -132,10 +134,15 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
         new_population = []
         elites, elite_indices = select_elite(population, fitness)
         for i,elite in enumerate(elites):
+            if(visualize):
+                print("Elite gene:" , elite)
+                print("Elite gene index:" ,elite_indices[i])
+                print("Fitness: ", fitness[elite_indices[i]])
             new_population.append(elite)
             new_drone_occupancies.append(drone_occupancies[elite_indices[i]])
         
         parents, indices = fitness_proportionate_selection(population, fitness, num_crossover)
+
         
         if visualize:
             print("Parents: ", parents)
@@ -149,16 +156,28 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
             parent1 = parents[i]
             parent2 = parents[i + 1]
             # Perform crossover
+            if(visualize):
+                print("Parent 1 for crossover: ", parent1)
+                print("Parent 2 for crossover: ", parent2)
+                print("Fitness for parent 1: ", all_fitness[indices[i]])
+                print("Fitness for parent 2: ", all_fitness[indices[i+1]])
 
             child1, child2, drone_occupancy_1,drone_occupancy_2 = crossover(parent1, parent2, grid, drone_occupancies[indices[i]], drone_occupancies[indices[i + 1]], visualize=visualize)
+            if(visualize):
+                print("Child 1 for crossover: ", child1)
+                print("Child 2 for crossover: ", child2)
+
+            # print("Fitness for Child 1: ", all_fitness[indices[i]])
+            # print("Fitness for Child 2: ", all_fitness[indices[i+1]])
             if(len(child1) == 0 or len(child2) == 0 or len(drone_occupancy_1) == 0 or len(drone_occupancy_2) == 0):
                 new_drone_occupancies.append(drone_occupancies[indices[i]])
                 new_drone_occupancies.append(drone_occupancies[indices[i + 1]])
                 new_population.append(parent1)
                 new_population.append(parent2)
                 continue
-            print("Appending drone occupancy from crossover: ", len(drone_occupancy_1))
-            print("Appending drone occupancy from crossover: ", len(drone_occupancy_2))
+            if(visualize):
+                print("Appending drone occupancy from crossover: ", len(drone_occupancy_1))
+                print("Appending drone occupancy from crossover: ", len(drone_occupancy_2))
             new_drone_occupancies.append(drone_occupancy_1)
             new_drone_occupancies.append(drone_occupancy_2)
             new_population.append(child1)
@@ -174,9 +193,13 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
         for i , gene in enumerate(worst_genes):
             if visualize:
                 print("Index: ", i)
+                print("Gene: ", gene)
+                print("Gene index: ", worst_gene_indices[i])
 
             gene_index = worst_gene_indices[i]
             new_gene, new_drone_occupancy = mutate(gene,drone_occupancies[gene_index],grid)
+            if(visualize):
+                print("New gene after mutation: ", new_gene)
             if(len(new_gene) != 0):
                 new_drone_occupancies.append(new_drone_occupancy)
                 new_population.append(new_gene)

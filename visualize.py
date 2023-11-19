@@ -6,6 +6,20 @@ import json
 import time
 import vtk
 
+def get_paths(data, drone_number):
+    drone_paths = {}
+    drone_paths = []
+    for j in range(len(data)):
+        for k in range(len(data[j])):
+            for l in range(len(data[j][k])):
+                drones_in_cell = data[j][k][l]
+                for drone_tag,time_stamp in drones_in_cell:
+                    if drone_tag == drone_number:
+                        drone_paths.append((j,k,l,time_stamp))
+    #sort drone_paths[i] by time_stamp
+    drone_paths.sort(key=lambda tup: tup[3])
+    return drone_paths
+
 def visualize_problem_solution(ps_list, pt_list, obstacle_list, solution_paths=None):
     # Create a VTK renderer
     renderer = vtk.vtkRenderer()
