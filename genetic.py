@@ -256,7 +256,7 @@ obstacle_list2 = [
 
 
 start_time = time.time()
-best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid2, ps_list2, pt_list2, obstacle_list2, visualize=False)
+best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=False)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
