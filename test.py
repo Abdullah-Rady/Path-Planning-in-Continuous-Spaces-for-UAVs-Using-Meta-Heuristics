@@ -1,16 +1,22 @@
 import numpy as np
+import random
 
-def calculate_stats_per_window(fitness_values, window_size):
+distance_matrix = np.array([[0,12,20,25,30,30],
+                            [12,0,10,11,22,30],
+                            [20,10,0,2,11,25],
+                            [25,11,2,0,10,20],
+                            [30,22,11,10,0,12],
+                            [30,30,25,20,12,0]], dtype=int)
 
-    stats_per_window = []
-    num_windows = len(fitness_values) // window_size
+pheromone_matrix = np.ones_like(distance_matrix) * 0.5  # Initial pheromone matrix
 
-    for i in range(num_windows):
-        window_start = i * window_size
-        window_end = window_start + window_size
-        window_fitness = fitness_values[window_start:window_end]
-        window_mean = np.mean(window_fitness)
-        stats_per_window.append(window_mean)
-        
-    return stats_per_window
+current_city = np.random.randint(5)
+visited_cities = [current_city]
 
+probabilities = (pheromone_matrix[current_city]) * ((1 / distance_matrix[current_city]))
+probabilities /= probabilities.sum()
+random = random.random()
+
+probabilities[visited_cities] = 0  # Exclude visited cities
+print(probabilities)
+print(pheromone_matrix)
