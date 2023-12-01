@@ -1,9 +1,6 @@
 import random
 import math
 import time
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation 
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from objective_function import calculate_total_fitness, generate_initial_solution, build_grid, tweak_path, tweak_path_crossover
 from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
