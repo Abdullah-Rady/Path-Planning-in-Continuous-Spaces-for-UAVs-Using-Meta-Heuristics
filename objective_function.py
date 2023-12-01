@@ -342,7 +342,7 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_path_to_be_tweaked, dro
 
 
 
-def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid, visualize = True):
+def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point, target_point, grid, visualize = False):
     if visualize:
         print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
 
@@ -350,6 +350,7 @@ def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, 
     drone_occupancy_copy = drone_occupancy.copy()
     new_path = []
     new_path.append(starting_point)
+   
     valid_points = get_valid_points(grid,starting_point,target_point)
     depth = 0
     path_length = min(len(old_path), len(path_to_be_inserted))

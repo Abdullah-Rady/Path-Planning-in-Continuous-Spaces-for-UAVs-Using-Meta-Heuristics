@@ -29,7 +29,7 @@ def get_old_occupancies(old_drone_occupancy, new_drone_occupancy, pos):
                             for k in range(len(old_drone_occupancy[n][m])):
                                for s in range(len(old_drone_occupancy[n][m][k])):
                                     if old_drone_occupancy[n][m][k][s][0] == pos + 1:
-                                        new_drone_occupancy[n][m][k][s].append(old_drone_occupancy[n][m][k][s])
+                                        new_drone_occupancy[n][m][k].append(old_drone_occupancy[n][m][k][s])
 
 
 def particle_swarm_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
@@ -110,17 +110,24 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
                
                 particles_velocity[i][j] = [[(a1 + a2), (b1 + b2), (c1 + c2)] for (a1, b1, c1), (a2, b2, c2) in zip(temp, particles_velocity[i][j])]
                 
+                # print("particles velocity")
+                # print(particles_velocity[i][j])
+
                 #update position
-                population[i][j] = [[(a1 + a2), (b1 + b2), (c1 + c2)] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], particles_velocity[i][j])]
+                old_population = population[i][j].copy()
+                population[i][j] = [[(int(round(a1 + a2))), (int(round(b1 + b2))), (int(round(c1 + c2)))] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], particles_velocity[i][j])]
                 
-                new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, grid, starting_points[j], target_points[j], grid)
+                # print("after update position")
+                # print(population[i][j])
+                
+                new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, starting_points[j], target_points[j], grid)
                 
                 if len(new_path) == 0:
-                    population[i][j] = population[i][j] - particles_velocity[i][j]                    
+                    population[i][j] = old_population
                     get_old_occupancies(drone_occupancies[i], new_drone_occupancy, j)
                     continue
                 
-                print("new path ",new_path)
+                # print("new path ", new_path)
 
                 new_drone_occupancy = drone_occupancy_copy
                 population[i][j] = new_path
@@ -175,6 +182,6 @@ obstacle_list2 = [
 ]
 
 # Run CPSO
-best_position, best_score = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=False)
+best_position, best_score = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
 # print(f"Best selected indices: {np.nonzero(best_position)[0]}")
 # print(f"Best score: {best_score}")
