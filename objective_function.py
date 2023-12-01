@@ -342,9 +342,10 @@ def tweak_path_crossover(drone_paths1,drone_paths2,index_path_to_be_tweaked, dro
 
 
 
-def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid, visualize = False):
+def tweak_path_cross(drone_paths,index_path_to_be_tweaked, path_to_be_inserted, drone_occupancy,starting_point,target_point, grid, visualize = True):
     if visualize:
         print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
+
     old_path = drone_paths[index_path_to_be_tweaked]
     drone_occupancy_copy = drone_occupancy.copy()
     new_path = []
@@ -397,7 +398,7 @@ def contains_tag(drone_occupancy,drone_tag):
                         return True
     return False
 
-def tweak_path(drone_paths,index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid, visualize = False):
+def tweak_path(drone_paths, index_path_to_be_tweaked, drone_occupancy,starting_point,target_point, grid, visualize = False):
     if visualize:
         print("Tweaking path for drone " + str(index_path_to_be_tweaked + 1))
     

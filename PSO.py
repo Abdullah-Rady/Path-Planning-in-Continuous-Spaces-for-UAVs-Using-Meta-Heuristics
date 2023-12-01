@@ -1,15 +1,14 @@
 import numpy as np
 import time
-from objective_function import calculate_total_fitness, generate_initial_solution
+from objective_function import calculate_total_fitness, generate_initial_solution, tweak_path_cross
 from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
 
 # Parameters
-# num_elements = 7  # Number of elements or items to select from
 swarm_size = 10
 max_iterations = 100
-inertia_weight = 0.5
-c1 = 1.5
-c2 = 1.5
+inertia_weight = 0.7298
+c1 = 1.4960
+c2 = 1.4960
 
 
 def generate_swarm(size_of_grid, starting_points, target_points, obstacles):
@@ -18,33 +17,57 @@ def generate_swarm(size_of_grid, starting_points, target_points, obstacles):
     grid = []
 
     for _ in range(swarm_size):
-        paths,grid, drone_occupancy = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)
+        paths, grid, drone_occupancy = generate_initial_solution(size_of_grid, starting_points, target_points, obstacles)
         population.append(paths)
         drone_occupancies.append(drone_occupancy)
 
     return population, drone_occupancies,grid
 
-def particle_swarm_optimization(objective_function, size_of_grid, starting_points, target_points, obstacles, visualize=False):
+def get_old_occupancies(old_drone_occupancy, new_drone_occupancy, pos):
+           for n in range(len(old_drone_occupancy)):
+                        for m in range(len(old_drone_occupancy[n])):
+                            for k in range(len(old_drone_occupancy[n][m])):
+                               for s in range(len(old_drone_occupancy[n][m][k])):
+                                    if old_drone_occupancy[n][m][k][s][0] == pos + 1:
+                                        new_drone_occupancy[n][m][k][s].append(old_drone_occupancy[n][m][k][s])
+
+
+def particle_swarm_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
     # Initialize particles randomly selecting indices within the range of elements
     population, drone_occupancies, grid = generate_swarm(size_of_grid, starting_points, target_points, obstacles)
     num_elements = len(population[0])
 
     # Initialize velocities as binary values
-    particles_velocity = np.random.uniform(-1, 1, size=(swarm_size, num_elements))
+    # particles_velocity = np.random.uniform(-1, 1, size=(swarm_size, num_elements))
+    particles_velocity = [
+        [
+            [
+                (0, 0, 0) for _ in range(len(population[i][j]))
+            ] for j in range(len(population[i]))
+        ] for i in range(swarm_size)
+    ]
+
+    # print("particles velocity ",particles_velocity)
 
     # Initialize best known positions and scores for each particle
     personal_best_position = population.copy()
     personal_best_score = np.full(swarm_size, np.inf)
 
+    # print("best pos ",personal_best_position)
+    # print("best score ",personal_best_score)
+
     # Initialize global best position and score
-    global_best_position = np.zeros(num_elements)
+    global_best_position = []
     global_best_score = np.inf
+
+    # print("global best pos ",global_best_position)
 
     for _ in range(max_iterations):
 
         for i in range(swarm_size):
 
             score = calculate_total_fitness(population[i])
+
             if score < personal_best_score[i]:
                 personal_best_score[i] = score
                 personal_best_position[i] = population[i]
@@ -53,14 +76,59 @@ def particle_swarm_optimization(objective_function, size_of_grid, starting_point
                 global_best_score = score
                 global_best_position = population[i]
 
-        for i in range(swarm_size):
-            inertia = inertia_weight * particles_velocity[i]
-            cognitive = c1 * np.random.random() * (personal_best_position[i] - population[i])
-            social = c2 * np.random.random() * (global_best_position - population[i])
-            particles_velocity[i] = inertia + cognitive + social
+            if visualize:
+                print(f"best score: {global_best_score}")
 
-            # Apply velocity updates (binary, where 0 means element not selected and 1 means selected)
-            population[i] = np.clip(population[i] + particles_velocity[i], 0, 1)
+        for i in range(swarm_size):
+        
+
+            new_drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]            
+            # Apply velocity updates
+            for j in range(len(population[i])):
+
+                #update velocity
+
+                #update inertia
+                
+                for i in range(len(particles_velocity)):
+                    for j in range(len(particles_velocity[i])):
+                        for k in range(len(particles_velocity[i][j])):
+                            particles_velocity[i][j][k] = (inertia_weight * particles_velocity[i][j][k][0], inertia_weight * particles_velocity[i][j][k][1], inertia_weight * particles_velocity[i][j][k][2])
+                            
+                # first constant
+                t1 = c1 * np.random.random()
+                # 2nd constant
+                t2 = c2 * np.random.random()
+             
+                cognitive = [[ t1 * (a1 - a2) , t1 * (b1 - b2) , t1 * (c1 - c2)] for (a1, b1, c1), (a2, b2, c2) in zip(personal_best_position[i][j], population[i][j])]
+                # cognitive = c1 * np.random.random() * (personal_best_position[i][j] - population[i][j])
+
+                social = [[ t2 * (a1 - a2), t2 * (b1 - b2), t2 * (c1 - c2)] for (a1, b1, c1), (a2, b2, c2) in zip(global_best_position[j], population[i][j])]
+                # social = c2 * np.random.random() * (global_best_position[j] - population[i][j])
+               
+                temp = [[(a1 + a2), (b1 + b2), (c1 + c2)] for (a1, b1, c1), (a2, b2, c2) in zip(social, cognitive)]
+               
+                particles_velocity[i][j] = [[(a1 + a2), (b1 + b2), (c1 + c2)] for (a1, b1, c1), (a2, b2, c2) in zip(temp, particles_velocity[i][j])]
+                
+                #update position
+                population[i][j] = [[(a1 + a2), (b1 + b2), (c1 + c2)] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], particles_velocity[i][j])]
+                
+                new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, grid, starting_points[j], target_points[j], grid)
+                
+                if len(new_path) == 0:
+                    population[i][j] = population[i][j] - particles_velocity[i][j]                    
+                    get_old_occupancies(drone_occupancies[i], new_drone_occupancy, j)
+                    continue
+                
+                print("new path ",new_path)
+
+                new_drone_occupancy = drone_occupancy_copy
+                population[i][j] = new_path
+
+            drone_occupancies[i] = new_drone_occupancy
+
+
+            
 
     return global_best_position, global_best_score
 
@@ -107,6 +175,6 @@ obstacle_list2 = [
 ]
 
 # Run CPSO
-best_position, best_score = particle_swarm_optimization_combinatorial(objective_function, num_elements, swarm_size, max_iterations, inertia_weight, c1, c2)
-print(f"Best selected indices: {np.nonzero(best_position)[0]}")
-print(f"Best score: {best_score}")
+best_position, best_score = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=False)
+# print(f"Best selected indices: {np.nonzero(best_position)[0]}")
+# print(f"Best score: {best_score}")
