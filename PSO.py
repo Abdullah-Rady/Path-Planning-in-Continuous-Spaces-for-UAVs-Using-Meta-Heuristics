@@ -77,6 +77,8 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
 
             score = calculate_total_fitness(population[i])
             all_fitness.append(score)
+            if visualize:
+                print(f" score: {score}")
 
             if score < personal_best_score[i]:
                 personal_best_score[i] = score
@@ -87,8 +89,9 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
                 global_best_score = score
                 global_best_position = population[i]
 
-            if visualize:
-                print(f"best score: {global_best_score}")
+
+        if visualize:
+            print(f"best score: {global_best_score}")
 
         for i in range(swarm_size):
         
@@ -128,21 +131,21 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
                 # print(population[i][j])
                 
                 if population[i][j] == old_population:
-                    print("particle " + str(i) + " drone " + str(j)+ " is the same as old after adding velocity")
+                    # print("particle " + str(i) + " drone " + str(j)+ " is the same as old after adding velocity")
                     continue
                 
-                print("particle " + str(i) + " tweaking path:" + str(j))
+                # print("particle " + str(i) + " tweaking path:" + str(j))
                 new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, starting_points[j], target_points[j], grid)
-                print("finished tweaking path")
+                # print("finished tweaking path")
         
                 if len(new_path) == 0:
-                    print("couldnt find a new path")
+                    # print("couldnt find a new path")
                     population[i][j] = old_population
                     get_old_occupancies(drone_occupancies[i], new_drone_occupancy, j)
                     continue
                 
                 # print("new path ", new_path)
-                print("found a new path")
+                # print("found a new path")
                 new_drone_occupancy = drone_occupancy_copy
                 population[i][j] = new_path
 
