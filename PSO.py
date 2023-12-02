@@ -31,6 +31,12 @@ def get_old_occupancies(old_drone_occupancy, new_drone_occupancy, pos):
                                     if old_drone_occupancy[n][m][k][s][0] == pos + 1:
                                         new_drone_occupancy[n][m][k].append(old_drone_occupancy[n][m][k][s])
 
+def add_inertia(particles_velocity):
+     for i in range(len(particles_velocity)):
+                    for j in range(len(particles_velocity[i])):
+                        for k in range(len(particles_velocity[i][j])):
+                            particles_velocity[i][j][k] = (inertia_weight * particles_velocity[i][j][k][0], inertia_weight * particles_velocity[i][j][k][1], inertia_weight * particles_velocity[i][j][k][2])
+
 
 def particle_swarm_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
     # Initialize particles randomly selecting indices within the range of elements
@@ -64,13 +70,18 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
 
     for _ in range(max_iterations):
 
+        all_fitness = []
+        particle_fitness = []
+
         for i in range(swarm_size):
 
             score = calculate_total_fitness(population[i])
+            all_fitness.append(score)
 
             if score < personal_best_score[i]:
                 personal_best_score[i] = score
                 personal_best_position[i] = population[i]
+
 
             if score < global_best_score:
                 global_best_score = score
@@ -89,11 +100,7 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
                 #update velocity
 
                 #update inertia
-                
-                for i in range(len(particles_velocity)):
-                    for j in range(len(particles_velocity[i])):
-                        for k in range(len(particles_velocity[i][j])):
-                            particles_velocity[i][j][k] = (inertia_weight * particles_velocity[i][j][k][0], inertia_weight * particles_velocity[i][j][k][1], inertia_weight * particles_velocity[i][j][k][2])
+                add_inertia(particles_velocity)
                             
                 # first constant
                 t1 = c1 * np.random.random()
@@ -120,15 +127,22 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
                 # print("after update position")
                 # print(population[i][j])
                 
-                new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, starting_points[j], target_points[j], grid)
+                if population[i][j] == old_population:
+                    print("particle " + str(i) + " drone " + str(j)+ " is the same as old after adding velocity")
+                    continue
                 
+                print("particle " + str(i) + " tweaking path:" + str(j))
+                new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, population[i][j], new_drone_occupancy, starting_points[j], target_points[j], grid)
+                print("finished tweaking path")
+        
                 if len(new_path) == 0:
+                    print("couldnt find a new path")
                     population[i][j] = old_population
                     get_old_occupancies(drone_occupancies[i], new_drone_occupancy, j)
                     continue
                 
                 # print("new path ", new_path)
-
+                print("found a new path")
                 new_drone_occupancy = drone_occupancy_copy
                 population[i][j] = new_path
 
@@ -137,7 +151,7 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
 
             
 
-    return global_best_position, global_best_score
+    return global_best_position, global_best_score, all_fitness
 
 
 size_of_grid1 = 30  # Size of the grid
@@ -182,6 +196,15 @@ obstacle_list2 = [
 ]
 
 # Run CPSO
-best_position, best_score = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
+start_time = time.time()
+best_position, best_score, all_fitness = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
+end_time = time.time()
+
+print(calculate_stats(all_fitness, start_time,end_time))
+
+plot_fitness_over_iterations(all_fitness)
+plot_best_fitness_over_iterations(all_fitness)
+
+visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_position)
 # print(f"Best selected indices: {np.nonzero(best_position)[0]}")
 # print(f"Best score: {best_score}")
