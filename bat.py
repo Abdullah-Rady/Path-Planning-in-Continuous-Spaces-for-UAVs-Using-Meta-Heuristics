@@ -37,7 +37,7 @@ def get_old_occupancies(old_drone_occupancy, new_drone_occupancy, pos):
 
 
 
-def particle_swarm_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
+def bat_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
 
     population, drone_occupancies, grid = generate_bats(size_of_grid, starting_points, target_points, obstacles)
 
@@ -58,7 +58,13 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
     global_best_bat = []
     global_best_score = np.inf
 
-    for i in range(num_of_bats):
+    # print("global best pos ",global_best_position)
+
+    for _ in range(max_iterations):
+
+        all_fitness = []
+
+        for i in range(num_of_bats):
 
             score = calculate_total_fitness(population[i])
 
@@ -75,12 +81,6 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
             if score < global_best_score:
                 global_best_score = score
                 global_best_bat = population[i]
-
-    # print("global best pos ",global_best_position)
-
-    for _ in range(max_iterations):
-
-        all_fitness = []
 
         if visualize:
             print(f"best score: {global_best_score}")
@@ -190,7 +190,7 @@ obstacle_list2 = [
 
 # Run CPSO
 start_time = time.time()
-best_position, best_score, all_fitness = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
+best_position, best_score, all_fitness = bat_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
