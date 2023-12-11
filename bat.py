@@ -93,13 +93,14 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
             for j in range(len(population[i])):
 
                 #update velocity
-                frequency = np.random.uniform(0, 1, 1)               
-                bat_velocity[i][j] = [[(a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][2]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency] for (ii, (a1, b1, c1)) in  enumerate(bat_velocity[i][j]) ]
+                frequency = np.random.uniform(0, 1, 1)
+                min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))            
+                bat_velocity[i][j] = [[(a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][2]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]) ]
                 
 
                 #update position
                 old_population = population[i][j].copy()
-                population[i][j] = [[(int(round(a1 + a2))), (int(round(b1 + b2))), (int(round(c1 + c2)))] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], bat_velocity[i][j])]
+                population[i][j] = [[(int(np.round(a1 + a2))), (int(np.round(b1 + b2))), (int(np.round(c1 + c2)))] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], bat_velocity[i][j])]
                 
                 if population[i][j] == old_population:
                     continue
@@ -120,8 +121,8 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 if np.random.uniform(0, 1, 1) > pulse_rate:
                     random_path = random.randint(0, len(global_best_bat) - 1)
-                    new_solution = [ (a + random.randint(-size_of_grid/4, size_of_grid/4) * loudness, b + random.randint(-size_of_grid/4, size_of_grid/4) * loudness, c + random.randint(-size_of_grid/4, size_of_grid/4) * loudness) for (a, b, c) in global_best_bat[random_path]]
-
+                    new_solution = [ (a + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness, b + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness, c + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness) for (a, b, c) in global_best_bat[random_path]]
+                print(new_solution)
                 tweak_path_cross(new_solution, random_path, new_solution[random_path], new_drone_occupancy, starting_points[j], target_points[j], grid)
                 new_fitness = calculate_total_fitness(new_solution)
 
