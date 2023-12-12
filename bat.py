@@ -121,25 +121,29 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 if np.random.uniform(0, 1, 1) > pulse_rate:
                     random_path = random.randint(0, len(global_best_bat) - 1)
+                    old_global_best = global_best_bat[random_path].copy()
                     # this is just a new path not a whole solution need to append it to the solution
                     new_solution = [ (a + random.randint(-2, 2) * loudness, b + random.randint(-2, 2) * loudness, c + random.randint(-2, 2) * loudness) for (a, b, c) in global_best_bat[random_path]]
                 
-                    tweak_path_cross(new_solution, random_path, new_solution[random_path], new_drone_occupancy, starting_points[j], target_points[j], grid)
-                    print(new_solution)
+                    tweaked_solution, drone_occupancy_copy = tweak_path_cross(global_best_bat[random_path], random_path, new_solution, new_drone_occupancy, starting_points[j], target_points[j], grid)
+                    # print(new_solution)
                 
-                    new_fitness = calculate_total_fitness(new_solution)
+                    new_fitness = calculate_total_fitness(tweaked_solution)
 
-                    if len(new_path) == 0:
+                    if len(tweaked_solution) == 0:
+                        global_best_bat = old_global_best
+                        # do i need get the old occupancy here?
+
                         continue
 
                     new_drone_occupancy = drone_occupancy_copy
 
                     if np.random.uniform(0, 1, 1) < alpha and new_fitness < bat_best_score[i]:
-                        bat_best_pos[i][j] = new_solution
+                        bat_best_pos[i][j] = tweaked_solution
                         bat_best_score[i][j] = new_fitness
                 
                     if new_fitness < global_best_score:
-                        global_best_bat = new_solution
+                        global_best_bat = tweaked_solution
                         global_best_score = new_fitness
 
 
