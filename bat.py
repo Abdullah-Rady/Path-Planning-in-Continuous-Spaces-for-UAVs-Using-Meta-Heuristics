@@ -94,8 +94,9 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 #update velocity
                 frequency = np.random.uniform(0, 1, 1)
-                min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))            
-                bat_velocity[i][j] = [[(a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][2]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]) ]
+                min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))        
+
+                bat_velocity[i][j] = [ [ (a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][1]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency ] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]) ]
                 
 
                 #update position
@@ -122,18 +123,15 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
                 if np.random.uniform(0, 1, 1) > pulse_rate:
                     random_path = random.randint(0, len(global_best_bat) - 1)
                     old_global_best = global_best_bat[random_path].copy()
-                    # this is just a new path not a whole solution need to append it to the solution
+
                     new_solution = [ (a + random.randint(-2, 2) * loudness, b + random.randint(-2, 2) * loudness, c + random.randint(-2, 2) * loudness) for (a, b, c) in global_best_bat[random_path]]
                 
                     tweaked_solution, drone_occupancy_copy = tweak_path_cross(global_best_bat[random_path], random_path, new_solution, new_drone_occupancy, starting_points[j], target_points[j], grid)
-                    # print(new_solution)
-                
                     new_fitness = calculate_total_fitness(tweaked_solution)
 
-                    if len(tweaked_solution) == 0:
-                        global_best_bat = old_global_best
-                        # do i need get the old occupancy here?
+                    global_best_bat = old_global_best
 
+                    if len(tweaked_solution) == 0:
                         continue
 
                     new_drone_occupancy = drone_occupancy_copy
