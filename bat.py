@@ -10,8 +10,8 @@ max_iterations = 100
 num_of_bats = 10
 lower_bound = 0
 upper_bound = 1
-loudness = 0
-pulse_rate = 0
+loudness = 0.5
+pulse_rate = 0.2
 alpha = 0.5
 gamma = 0.9
 
@@ -121,23 +121,26 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 if np.random.uniform(0, 1, 1) > pulse_rate:
                     random_path = random.randint(0, len(global_best_bat) - 1)
-                    new_solution = [ (a + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness, b + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness, c + random.randint(-int(round(size_of_grid/4)), int(round(size_of_grid/4))) * loudness) for (a, b, c) in global_best_bat[random_path]]
-                print(new_solution)
-                tweak_path_cross(new_solution, random_path, new_solution[random_path], new_drone_occupancy, starting_points[j], target_points[j], grid)
-                new_fitness = calculate_total_fitness(new_solution)
-
-                if len(new_path) == 0:
-                    continue
-
-                new_drone_occupancy = drone_occupancy_copy
-
-                if np.random.uniform(0, 1, 1) < alpha and new_fitness < bat_best_score[i]:
-                    bat_best_pos[i][j] = new_solution
-                    bat_best_score[i][j] = new_fitness
+                    # this is just a new path not a whole solution need to append it to the solution
+                    new_solution = [ (a + random.randint(-2, 2) * loudness, b + random.randint(-2, 2) * loudness, c + random.randint(-2, 2) * loudness) for (a, b, c) in global_best_bat[random_path]]
                 
-                if new_fitness < global_best_score:
-                    global_best_bat = new_solution
-                    global_best_score = new_fitness
+                    tweak_path_cross(new_solution, random_path, new_solution[random_path], new_drone_occupancy, starting_points[j], target_points[j], grid)
+                    print(new_solution)
+                
+                    new_fitness = calculate_total_fitness(new_solution)
+
+                    if len(new_path) == 0:
+                        continue
+
+                    new_drone_occupancy = drone_occupancy_copy
+
+                    if np.random.uniform(0, 1, 1) < alpha and new_fitness < bat_best_score[i]:
+                        bat_best_pos[i][j] = new_solution
+                        bat_best_score[i][j] = new_fitness
+                
+                    if new_fitness < global_best_score:
+                        global_best_bat = new_solution
+                        global_best_score = new_fitness
 
 
             drone_occupancies[i] = new_drone_occupancy
