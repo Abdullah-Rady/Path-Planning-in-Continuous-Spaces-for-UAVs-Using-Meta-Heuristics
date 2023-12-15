@@ -82,12 +82,12 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
 
             if score < personal_best_score[i]:
                 personal_best_score[i] = score
-                personal_best_position[i] = population[i]
+                personal_best_position[i] = population[i].copy()
 
 
             if score < global_best_score:
                 global_best_score = score
-                global_best_position = population[i]
+                global_best_position = population[i].copy()
 
 
         if visualize:

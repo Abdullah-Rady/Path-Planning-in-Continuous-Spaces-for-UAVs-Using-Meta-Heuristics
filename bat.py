@@ -57,6 +57,7 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
     # Initialize global best position and score
     global_best_bat = []
     global_best_score = np.inf
+    global_best_index = 0
 
     # print("global best pos ",global_best_position)
 
@@ -71,19 +72,20 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
             all_fitness.append(score)
 
             if score < bat_best_score[i]:
-                bat_best_pos[i] = population[i]
+                bat_best_pos[i] = population[i].copy()
                 bat_best_score[i] = score
 
-            if visualize:
-                print(f" score: {score}")
+            # if visualize:
+            print(f" score: {score}")
 
 
             if score < global_best_score:
                 global_best_score = score
-                global_best_bat = population[i]
+                global_best_bat = population[i].copy()
+                global_best_index = i
 
-        if visualize:
-            print(f"best score: {global_best_score}")
+        # if visualize:
+        print(f"best score: {global_best_score}")
 
         for i in range(num_of_bats):
         
@@ -94,9 +96,26 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 #update velocity
                 frequency = np.random.uniform(0, 1, 1)
-                min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))        
+                min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))     
 
-                bat_velocity[i][j] = [ [ (a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][1]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency ] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]) ]
+                # print("bat velocity i j ", bat_velocity[i][j])   
+                # print("global best bat j", global_best_bat[j])
+                # print("bat velocity i j " ,bat_velocity[i][j][:min_length - 1])
+                # print("bat velocity i j min" ,bat_velocity[i][j][:min_length - 1])
+
+                # print("global best bat", global_best_bat)
+                # print("global best bat j ", global_best_bat[j])
+                # for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]):
+    
+                #     print("global best bat ", global_best_bat[j][ii])
+                #     print("global best bat ii 0", global_best_bat[j][ii][0])
+                #     print("global best bat ii 1", global_best_bat[j][ii][1])
+                #     print("global best bat ii 2", global_best_bat[j][ii][2])
+                    
+                   
+
+
+                bat_velocity[i][j] = [ [ (a1 - global_best_bat[j][ii][0]) * frequency, (b1 + global_best_bat[j][ii][1]) * frequency, (c1 + global_best_bat[j][ii][2]) * frequency ] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length - 1]) ]
                 
 
                 #update position
@@ -122,26 +141,33 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
 
                 if np.random.uniform(0, 1, 1) > pulse_rate:
                     random_path = random.randint(0, len(global_best_bat) - 1)
-                    old_global_best = global_best_bat[random_path].copy()
+                    old_global_best = global_best_bat.copy()
 
                     new_solution = [ (a + random.randint(-2, 2) * loudness, b + random.randint(-2, 2) * loudness, c + random.randint(-2, 2) * loudness) for (a, b, c) in global_best_bat[random_path]]
                 
-                    tweaked_solution, drone_occupancy_copy = tweak_path_cross(global_best_bat[random_path], random_path, new_solution, new_drone_occupancy, starting_points[j], target_points[j], grid)
+                    tweaked_solution, drone_occupancy_copy = tweak_path_cross(population[global_best_index], random_path, new_solution, new_drone_occupancy, starting_points[j], target_points[j], grid)
                     new_fitness = calculate_total_fitness(tweaked_solution)
 
-                    global_best_bat = old_global_best
+                    # global_best_bat = old_global_best
 
                     if len(tweaked_solution) == 0:
+                        population[global_best_index] = old_global_best
+                        get_old_occupancies(drone_occupancies[global_best_index], new_drone_occupancy, random_path)
                         continue
-
-                    new_drone_occupancy = drone_occupancy_copy
+                    
 
                     if np.random.uniform(0, 1, 1) < alpha and new_fitness < bat_best_score[i]:
+                        population[global_best_index] = tweaked_solution.copy()
+                        new_drone_occupancy = drone_occupancy_copy
                         bat_best_pos[i][j] = tweaked_solution
                         bat_best_score[i][j] = new_fitness
+
                 
                     if new_fitness < global_best_score:
-                        global_best_bat = tweaked_solution
+                        population[global_best_index] = tweaked_solution.copy()
+                        new_drone_occupancy = drone_occupancy_copy
+
+                        global_best_bat = tweaked_solution.copy()
                         global_best_score = new_fitness
 
 
@@ -196,7 +222,7 @@ obstacle_list2 = [
 
 # Run CPSO
 start_time = time.time()
-best_position, best_score, all_fitness = bat_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
+best_position, best_score, all_fitness = bat_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
