@@ -61,7 +61,7 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
         all_fitness = []
         for i in range(num_of_bats):
             fitness = calculate_total_fitness(population[i])
-            if True:
+            if visualize:
                 print(f"Bat: {i} Fitness: {fitness}")
                 print(f"Solution: {population[i]}")
             all_fitness.append(fitness)
