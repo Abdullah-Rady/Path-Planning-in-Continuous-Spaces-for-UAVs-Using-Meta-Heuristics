@@ -6,16 +6,16 @@ from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_f
 
 # bat algorithm implementation based on https://arxiv.org/abs/1004.4170
 
-max_iterations = 100
+max_iterations = 20
 num_of_bats = 10
 lower_bound = 0
 upper_bound = 1
-alpha = 0.9
+alpha = 0.5
 gamma = 0.9
 min_frequency = 0
 max_frequency = 1
 min_loudness = 0
-max_loudness = 1
+max_loudness = 3
 min_pulse_rate = 0
 max_pulse_rate = 1
 
@@ -56,19 +56,24 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
     loudness = [ np.random.uniform(min_loudness,max_loudness,1) for _ in range(num_of_bats)]
     initial_pulse_rate = [ np.random.uniform(min_pulse_rate,max_pulse_rate,1) for _ in range(num_of_bats)]
     pulse_rate = initial_pulse_rate.copy()
+    all_fitness = []
     for t in range(max_iterations):
+        current_fitness = []
         print(f"Iteration: {t}")
-        all_fitness = []
         for i in range(num_of_bats):
             fitness = calculate_total_fitness(population[i])
             if visualize:
                 print(f"Bat: {i} Fitness: {fitness}")
                 print(f"Solution: {population[i]}")
             all_fitness.append(fitness)
+            current_fitness.append(fitness)
             if fitness < global_best_score:
                 global_best_score = fitness
                 global_best_bat = population[i]
+        print(f"Current fitnesses: {current_fitness}")
         for i in range(num_of_bats):
+            if(population[i] == global_best_bat):
+                continue
             if visualize:
                 print(f"Bat: {i}")
             new_drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]            
@@ -79,7 +84,6 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
                 min_length = min(len(bat_velocity[i][j]), len(global_best_bat[j]))     
                 bat_velocity[i][j] = [ [ (a1 - global_best_bat[j][ii][0]) * frequency[0], (b1 + global_best_bat[j][ii][1]) * frequency[1], (c1 + global_best_bat[j][ii][2]) * frequency[2] ] for (ii,(a1, b1, c1)) in  enumerate(bat_velocity[i][j][:min_length]) ]
                 new_path_before_check = [[(int(np.round(a1 + a2))), (int(np.round(b1 + b2))), (int(np.round(c1 + c2)))] for (a1, b1, c1), (a2, b2, c2) in zip(population[i][j], bat_velocity[i][j])]
-                drone_occupancy_before_update = new_drone_occupancy.copy()
                 if visualize:
                     print("Tweaking path")
                 new_path, drone_occupancy_copy = tweak_path_cross(population[i], j, new_path_before_check, new_drone_occupancy, starting_points[j], target_points[j], grid,visualize=visualize)
@@ -92,7 +96,14 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
                 population[i][j] = new_path
                 if visualize:
                     print("Path tweaked")
-                if np.random.uniform(0, 1, 1) > pulse_rate[i]:
+            drone_occupancies[i] = new_drone_occupancy
+
+            rand1 = np.random.uniform(0, 1, 1)
+            rand2 = np.random.uniform(0, 1, 1)
+            new_member = []
+            new_member_drone_occupancy = [[[ [] for _ in range(len(grid))] for _ in range(len(grid))] for _ in range(len(grid))]            
+            for j in range(len(population[i])):
+                if rand1 > pulse_rate[i]:
                     if visualize:
                         print("Searching around best")
                     avg_loudness = np.mean(loudness)
@@ -101,23 +112,22 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
                         int(np.round(c + rand * avg_loudness))) for (a, b, c) in global_best_bat[j]]
                     if visualize:
                         print(f"Tweaking path: {new_solution_around_best} around best", )                    
-                    tweaked_solution, drone_occupancy_copy = tweak_path_cross(population[i], j, new_solution_around_best, drone_occupancy_before_update, starting_points[j], target_points[j], grid, visualize=visualize)
+                    tweaked_solution, drone_occupancy_copy = tweak_path_cross(population[i], j, new_solution_around_best, new_member_drone_occupancy, starting_points[j], target_points[j], grid, visualize=visualize)
                     if len(tweaked_solution) == 0:
                         if visualize:
                             print("No path around best found")
-                        continue
-                    old_fitness = calculate_single_path_fitness(population[i][j])
-                    new_fitness = calculate_single_path_fitness(tweaked_solution)
+                        break
                     if visualize:
                         print("Path found around best")
-                    if np.random.uniform(0, 1, 1) < loudness[i] and new_fitness < old_fitness:
-                        population[i][j] = tweaked_solution
-                        new_drone_occupancy = drone_occupancy_copy
-                        loudness[i] = loudness[i] * alpha
-                        pulse_rate[i] = initial_pulse_rate[i] * (1 - np.exp(-gamma * t))
-                        if visualize:
-                            print("Path tweaked around best")
-            drone_occupancies[i] = new_drone_occupancy
+                    new_member.append(tweaked_solution)
+                    new_member_drone_occupancy = drone_occupancy_copy
+            if(len(new_member) == len(starting_points)):
+                new_fitness = calculate_total_fitness(new_member)
+                if new_fitness < current_fitness[i] and rand2 < loudness[i]:
+                    population[i] = new_member
+                    drone_occupancies[i] = new_member_drone_occupancy
+                    loudness[i] = alpha * loudness[i]
+                    pulse_rate[i] = initial_pulse_rate[i] * (1 - np.exp(-gamma * t))
     return global_best_bat, global_best_score, all_fitness
 
 
@@ -172,6 +182,6 @@ print(calculate_stats(all_fitness, start_time,end_time))
 plot_fitness_over_iterations(all_fitness)
 plot_best_fitness_over_iterations(all_fitness)
 
-visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_position)
+visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, best_position)
 # print(f"Best selected indices: {np.nonzero(best_position)[0]}")
 # print(f"Best score: {best_score}")
