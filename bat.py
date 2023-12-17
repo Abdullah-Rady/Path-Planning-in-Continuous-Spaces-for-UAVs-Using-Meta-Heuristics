@@ -6,14 +6,14 @@ from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_f
 
 # bat algorithm implementation based on https://arxiv.org/abs/1004.4170
 
-max_iterations = 20
+max_iterations = 100
 num_of_bats = 10
 lower_bound = 0
 upper_bound = 1
 alpha = 0.5
 gamma = 0.9
 min_frequency = 0
-max_frequency = 1
+max_frequency = 2
 min_loudness = 0
 max_loudness = 3
 min_pulse_rate = 0
@@ -70,7 +70,7 @@ def bat_optimization(size_of_grid, starting_points, target_points, obstacles, vi
             if fitness < global_best_score:
                 global_best_score = fitness
                 global_best_bat = population[i]
-        print(f"Current fitnesses: {current_fitness}")
+        # print(f"Current fitnesses: {current_fitness}")
         for i in range(num_of_bats):
             if(population[i] == global_best_bat):
                 continue
