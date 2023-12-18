@@ -3,10 +3,10 @@ import math
 import time
 import numpy as np
 from objective_function import calculate_total_fitness, generate_initial_solution, build_grid, tweak_path, tweak_path_crossover
-from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
+from visualize import calculate_stats_per_window, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
 
 #Genetic Algorithm Parameters
-num_generations = 100
+num_generations = 40
 population_size  = 10
 p_elite = 0.2
 p_cross = 0.4
@@ -99,15 +99,15 @@ def genetic(size_of_grid, starting_points, target_points, obstacles, visualize=F
     population, drone_occupancies, grid = generate_population(size_of_grid, starting_points, target_points, obstacles)
 
     initial_solution = population[0]
-    for pop in population:
-        print("Paths: ", pop)
-        print()
+    # for pop in population:
+    #     print("Paths: ", pop)
+    #     print()
     if visualize:
         print("Length of drone occupancies: ", len(drone_occupancies))
 
     all_fitness = []
     for iteration in range(num_generations):
-        print(iteration , "/" , num_generations)
+        # print(iteration , "/" , num_generations)
         fitness = []
         new_population = []
         new_drone_occupancies = []
@@ -252,14 +252,14 @@ obstacle_list2 = [
 
 
 
-start_time = time.time()
+# start_time = time.time()
 best_solution, best_fitness, population, initial_solution, all_fitness = genetic(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=False)
-end_time = time.time()
+# end_time = time.time()
 
-print(calculate_stats(all_fitness, start_time,end_time))
-# array_50_integers = np.random.randint(0, 101, size=50)
-plot_fitness_over_iterations(all_fitness)
-plot_best_fitness_over_iterations(all_fitness)
+# print(calculate_stats(all_fitness, start_time,end_time))
+# # array_50_integers = np.random.randint(0, 101, size=50)
+# plot_fitness_over_iterations(all_fitness)
+# plot_best_fitness_over_iterations(all_fitness)
 
 # population, drone_occupancies, grid = generate_population(size_of_grid2, ps_list2, pt_list2, obstacle_list2)
 
@@ -268,7 +268,7 @@ plot_best_fitness_over_iterations(all_fitness)
 
 
 # print("Best solution: ", best_solution)
-# print("Best solution: ", best_fitness)
+print("Best solution: ", best_fitness)
 # print("Best solution: ", population)
 
 # stats_dict = calculate_stats(fitness_values, end_time)
@@ -276,4 +276,19 @@ plot_best_fitness_over_iterations(all_fitness)
 
 # plot_fitness_over_iterations(fitness_values)
 
-visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_solution)
+# visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_solution)
+
+# best_scores = []
+# times = []
+
+# for i in range(6):
+#     start_time = time.time()
+#     best_position, best_score, _, _, all_fitness = genetic(size_of_grid2, ps_list2, pt_list2, obstacle_list2)
+#     end_time = time.time()   
+#     best_scores.append(best_score)
+#     times.append(end_time - start_time)
+
+# mean, std = calculate_stats_per_window(best_scores, len(best_scores))
+# print("mean: ", mean, " std: ", std)
+# mean, std = calculate_stats_per_window(times, len(times))
+# print("mean: ", mean, " std: ", std)

@@ -305,9 +305,9 @@ def plot_fitness_over_iterations( fitness_values):
     window_size = 10
     mean_per_population, std_per_population = calculate_stats_per_window(fitness_values, window_size)
     plt.plot(np.arange(1, len(fitness_values) // window_size + 1), mean_per_population, marker='o', linestyle='-')
-    plt.xlabel('Generation')
+    plt.xlabel('Iteration')
     plt.ylabel('Mean Fitness')
-    plt.title('Genetic Algorithm: Mean Fitness over Generations')
+    plt.title('Particle Swarm Algorithm: Mean Fitness over Iterations')
     plt.grid(True)
     plt.show()
 
@@ -325,15 +325,15 @@ def plot_best_fitness_over_iterations(fitness_values):
     fig, axs = plt.subplots(2, figsize=(8, 8))
 
     axs[0].plot(generations, min_per_population, marker='o', linestyle='-')
-    axs[0].set_xlabel('Generation')
+    axs[0].set_xlabel('Iteration')
     axs[0].set_ylabel('Min Fitness')
-    axs[0].set_title('Genetic Algorithm: Min Fitness per Generation')
+    axs[0].set_title('Particle Swarm Algorithm: Min Fitness per Iteration')
     axs[0].grid(True)
 
     axs[1].plot(generations, prefix_min, marker='o', linestyle='-')
-    axs[1].set_xlabel('Generation')
+    axs[1].set_xlabel('Iteration')
     axs[1].set_ylabel('Min Fitness')
-    axs[1].set_title('Genetic Algorithm: Prefix Min Fitness per Generations')
+    axs[1].set_title('Particle Swarm Algorithm: Prefix Min Fitness per Iteration')
     axs[1].grid(True)
 
     plt.tight_layout()
@@ -377,17 +377,7 @@ def calculate_min_stats_per_window(fitness_values, window_size):
     return min_per_window, prefix_min_array
 
 
-def calculate_stats(fitness_values, start_time, end_time):
-    mean_per_population, std_per_population = calculate_stats_per_window(fitness_values, 10)
 
-    fitness_mean = np.mean(mean_per_population)
-    fitness_std = np.std(std_per_population)
-    runtime = end_time - start_time
-    return {
-        "mean_fitness": fitness_mean,
-        "std_fitness": fitness_std,
-        "runtime": runtime
-    }
 
 def save_scenario_stats_to_json(scenario_name, stats_dict):
     with open(f"{scenario_name}_stats.json", "w") as file:

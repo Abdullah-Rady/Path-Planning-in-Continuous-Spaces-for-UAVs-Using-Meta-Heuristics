@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 import json
-import vtk
+# import vtk
 import time
 
-from visualize import calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
+from visualize import calculate_stats_per_window, calculate_stats, plot_best_fitness_over_iterations, plot_fitness_over_iterations, save_scenario_stats_to_json, visualize_problem_solution, get_paths
 from objective_function import calculate_total_fitness, generate_initial_solution,tweak_path
 
 # Simulated Annealing Parameters
@@ -58,20 +58,20 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
 
 
 
-    print("Initial Solution: ", current_solution)
+    # print("Initial Solution: ", current_solution)
 
     best_solution = current_solution  # Best solution found so far
     best_drone_occupancy = drone_occupancy
     best_solution_value = calculate_total_fitness(current_solution)  # Objective value of the best solution
 
 
-    print("Initial Solution Value: " , best_solution_value)
+    # print("Initial Solution Value: " , best_solution_value)
 
     current_temperature = initial_temperature
     iteration = 0
 
     while current_temperature > final_temperature and iteration <= max_iterations:
-        print( "Outer Iteration:", iteration)
+        # print( "Outer Iteration:", iteration)
         for it in range(n_iterations):
 
             fitness_value = calculate_total_fitness(current_solution)
@@ -90,10 +90,10 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
             new_solution = current_solution[:]
             new_solution[r1] = new_path
             time_paths = get_paths(drone_occupancy,r1+1)
-            print("New Solution After Feasibility Check: ", new_solution)
+            # print("New Solution After Feasibility Check: ", new_solution)
             # print("Paths os solution: ", time_paths)
             new_fitness_value = calculate_total_fitness(new_solution)
-            print("Current fitness value:" , new_fitness_value)
+            # print("Current fitness value:" , new_fitness_value)
             delta_E = new_fitness_value - fitness_value
             if delta_E < 0 or random.random() < math.exp(-delta_E / current_temperature):
                 current_solution = new_solution
@@ -101,8 +101,8 @@ def simulated_annealing(size_of_grid, starting_points, target_points, obstacles)
                     best_solution = current_solution
                     best_solution_value = new_fitness_value
                     best_drone_occupancy = drone_occupancy
-                    print("Best Solution: " , best_solution)
-                    print("Best Solution Value: " , best_solution_value)
+                    # print("Best Solution: " , best_solution)
+                    # print("Best Solution Value: " , best_solution_value)
         # Update temperature and iteration counter
         current_temperature = linear_cooling_schedule(current_temperature)
         iteration += 1
@@ -205,15 +205,15 @@ obstacle_list2 = [
     [(20, 15, 10), (25, 18, 20)],
     [(7, 15, 12), (10, 20, 18)],]
     
-size_of_grid2 = 50
-start_time = time.time()
-afv, mfv, drone_occupancy, best_solution,temperatures = simulated_annealing(size_of_grid2, ps_list2, pt_list2, obstacle_list2)  # Run simulated annealing
-end_time = time.time()
+# size_of_grid2 = 50
+# start_time = time.time()
+# afv, mfv, drone_occupancy, best_solution,temperatures = simulated_annealing(size_of_grid2, ps_list2, pt_list2, obstacle_list2)  # Run simulated annealing
+# end_time = time.time()
 
-print(calculate_stats(afv, start_time,end_time))
-# array_50_integers = np.random.randint(0, 101, size=50)
-plot_fitness_over_iterations(afv)
-plot_best_fitness_over_iterations(afv)
+# print(calculate_stats(afv, start_time,end_time))
+# # array_50_integers = np.random.randint(0, 101, size=50)
+# plot_fitness_over_iterations(afv)
+# plot_best_fitness_over_iterations(afv)
 
 # with open('afv.json', 'w') as fp:
 #     json.dump(afv, fp)
@@ -274,5 +274,19 @@ def check_overlap(obj):
 
 
 
-visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_solution)
+# visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_solution)
 
+best_scores = []
+times = []
+
+for i in range(6):
+    start_time = time.time()
+    best_position, best_score, _, _, all_fitness = simulated_annealing(50, ps_list2, pt_list2, obstacle_list2)
+    end_time = time.time()   
+    best_scores.append(best_score)
+    times.append(end_time - start_time)
+
+mean, std = calculate_stats_per_window(best_scores, len(best_scores))
+print("mean: ", mean, " std: ", std)
+mean, std = calculate_stats_per_window(times, len(times))
+print("mean: ", mean, " std: ", std)
