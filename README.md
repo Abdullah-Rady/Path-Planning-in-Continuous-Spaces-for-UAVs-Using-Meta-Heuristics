@@ -18,15 +18,13 @@ For each drone \(i\), the decision variables include a vector \(x_i\) representi
 
 The objective function \(J\) is defined as the sum of individual travel times and energy consumption for all drones, with a weighting factor \(\alpha\) to balance time and energy considerations.
 
-\[
-\minimize J(x_1, x_2, \ldots, x_n, E_1, E_2, \ldots, E_n) \tag{2.1}
-\]
+![Equation 1](img/equation/1.png)
+
 
 Where \(J\) is calculated as the sum of individual travel times and energy consumption for each drone \(i\):
 
-\[
-J(x_1, x_2, \ldots, x_n, E_1, E_2, \ldots, E_n) = \sum_{i=1}^{n} (t_i + \alpha E_i) \tag{2.2}
-\]
+![Equation 2](img/equation/2.png)
+
 
 ### 2.4 Constraints
 
@@ -34,17 +32,15 @@ J(x_1, x_2, \ldots, x_n, E_1, E_2, \ldots, E_n) = \sum_{i=1}^{n} (t_i + \alpha E
 
 Ensure a minimum separation distance between the paths of all drones to prevent collisions.
 
-\[
-\forall i, j \in [1, n], i \neq j : h(x_i, x_j) = \min \text{separation}(x_i, x_j) \geq d_{\text{min}} \tag{2.3}
-\]
+![Equation 3](img/equation/3.png)
+
 
 #### 2.4.2 Start and Target Points
 
 Define equality constraints for each drone to ensure they start from their respective starting points and reach their target points.
 
-\[
-h(x_i) = x_i[0] = \psi[0] \quad \text{and} \quad x_i[-1] = \pti \tag{2.4}
-\]
+![Equation 3](img/equation/3.png)
+
 
 ### 2.5 Inequality Constraints
 
@@ -52,12 +48,10 @@ h(x_i) = x_i[0] = \psi[0] \quad \text{and} \quad x_i[-1] = \pti \tag{2.4}
 
 Ensure that the paths of the drones do not intersect with obstacles in the workspace.
 
-\[
-\forall i \in [1, n] : \forall \text{obstacle} \ k \in [1, \text{no}] : c(x_i, B_k) \geq r_k \tag{2.5}
-\]
+![Equation 4](img/equation/4.png)
+
 
 Where \(c(x_i, B_k)\) is a function that determines if the path of drone \(i\) intersects with the 3D obstacle \(B_k\), and \(r_k\) is a minimum separation distance between the path of drone \(i\) and the obstacle \(B_k\).
-
 
 ### 2.6 Assumptions
 
