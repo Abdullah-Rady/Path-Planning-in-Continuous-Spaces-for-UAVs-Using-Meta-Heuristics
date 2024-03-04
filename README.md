@@ -58,21 +58,11 @@ Ensure that the paths of the drones do not intersect with obstacles in the works
 
 Where \(c(x_i, B_k)\) is a function that determines if the path of drone \(i\) intersects with the 3D obstacle \(B_k\), and \(r_k\) is a minimum separation distance between the path of drone \(i\) and the obstacle \(B_k\).
 
-#### 2.5.2 Maximum Energy Constraint
-
-Enforce a constraint to prevent drones from exceeding their maximum energy capacity.
-
-\[
-\forall i \in [1, n] : E_i \leq E_{\text{max}} \tag{2.6}
-\]
-
-Where \(E_i\) is the energy consumption for drone \(i\) and \(E_{\text{max}}\) is the maximum allowable energy.
 
 ### 2.6 Assumptions
 
 - The drones maintain a constant speed.
 - The paths are continuous, and the control points form a continuous trajectory.
-- Energy consumption is proportional to the distance traveled.
 
 ## Algorithms Used
 
@@ -82,12 +72,5 @@ The solution employs various meta-heuristic algorithms, including:
 - Bat Algorithm
 - Simulated Annealing
 
-## Usage
-
-To utilize this solution, follow the steps below:
-
-1. Clone the repository.
-2. Execute the main path-planning script.
-3. Customize the input parameters as needed.
 
 Feel free to explore and contribute to further enhancements of the algorithms or the problem formulation. Feedback and contributions are highly appreciated!
