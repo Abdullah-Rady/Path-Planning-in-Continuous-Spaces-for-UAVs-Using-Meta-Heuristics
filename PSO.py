@@ -40,6 +40,8 @@ def add_inertia(particles_velocity):
 
 def particle_swarm_optimization(size_of_grid, starting_points, target_points, obstacles, visualize=False):
     # Initialize particles randomly selecting indices within the range of elements
+    all_fitness = []
+
     population, drone_occupancies, grid = generate_swarm(size_of_grid, starting_points, target_points, obstacles)
     num_elements = len(population[0])
 
@@ -70,9 +72,9 @@ def particle_swarm_optimization(size_of_grid, starting_points, target_points, ob
 
     for _ in range(max_iterations):
 
-        all_fitness = []
         particle_fitness = []
-
+        
+        print(f"Iteration: {_}")
         for i in range(swarm_size):
 
             score = calculate_total_fitness(population[i])
@@ -200,7 +202,7 @@ obstacle_list2 = [
 
 # Run CPSO
 start_time = time.time()
-best_position, best_score, all_fitness = particle_swarm_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1, visualize=True)
+best_position, best_score, all_fitness = particle_swarm_optimization(size_of_grid2, ps_list2, pt_list2, obstacle_list2, visualize=False)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))

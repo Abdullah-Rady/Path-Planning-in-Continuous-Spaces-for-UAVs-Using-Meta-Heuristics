@@ -174,7 +174,7 @@ obstacle_list2 = [
 
 # Run CPSO
 start_time = time.time()
-best_position, best_score, all_fitness = bat_optimization(size_of_grid1, ps_list1, pt_list1, obstacle_list1,visualize=False)
+best_position, best_score, all_fitness = bat_optimization(size_of_grid2, ps_list2, pt_list2, obstacle_list2 ,visualize=False)
 end_time = time.time()
 
 print(calculate_stats(all_fitness, start_time,end_time))
@@ -182,6 +182,6 @@ print(calculate_stats(all_fitness, start_time,end_time))
 plot_fitness_over_iterations(all_fitness)
 plot_best_fitness_over_iterations(all_fitness)
 
-visualize_problem_solution(ps_list1, pt_list1, obstacle_list1, best_position)
+visualize_problem_solution(ps_list2, pt_list2, obstacle_list2, best_position)
 # print(f"Best selected indices: {np.nonzero(best_position)[0]}")
 # print(f"Best score: {best_score}")
