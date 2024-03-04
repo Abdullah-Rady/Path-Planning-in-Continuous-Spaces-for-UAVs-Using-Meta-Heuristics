@@ -66,5 +66,13 @@ The solution employs various meta-heuristic algorithms, including:
 - Bat Algorithm
 - Simulated Annealing
 
+## Results
+
+![p](img/1.png)
+![p](img/2.png)
+![p](img/3.png)
+![p](img/4.png)
+
+
 
 Feel free to explore and contribute to further enhancements of the algorithms or the problem formulation. Feedback and contributions are highly appreciated!
