@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains an implementation of a path-planning solution for Unmanned Aerial Vehicles (UAVs) operating in continuous 3D spaces. The problem is addressed using various meta-heuristic algorithms, including Particle Swarm Optimization, Genetic Algorithm, Bat Algorithm, and Simulated Annealing. The primary objective is to find optimal paths for a fleet of drones to navigate from their starting points to target points in a 3D workspace while avoiding collisions with each other and obstacles, with an emphasis on minimizing total travel time and energy consumption.
+This repository contains an implementation of a path-planning solution for Unmanned Aerial Vehicles (UAVs) operating in continuous 3D spaces. The project is inspired by and implements the findings from the paper titled [Optimized Path-Planning in Continuous Spaces for Unmanned Aerial Vehicles Using Meta-Heuristics](https://ieeexplore.ieee.org/document/9206009). The problem is addressed using various meta-heuristic algorithms, including Particle Swarm Optimization, Genetic Algorithm, Bat Algorithm, and Simulated Annealing. The primary objective is to find optimal paths for a fleet of drones to navigate from their starting points to target points in a 3D workspace while avoiding collisions with each other and obstacles, with an emphasis on minimizing total travel time and energy consumption.
 
 ## Problem Formulation
 
